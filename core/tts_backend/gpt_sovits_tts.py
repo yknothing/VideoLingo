@@ -5,6 +5,7 @@ import subprocess
 import socket
 import time
 from core.utils import *
+from core.utils.config_utils import get_storage_paths
 
 def check_lang(text_lang, prompt_lang):
     # only support zh and en
@@ -86,7 +87,9 @@ def gpt_sovits_tts_for_videolingo(text, save_as, number, task_df):
         prompt_text = content
     elif REFER_MODE in [2, 3]:
         # Check if the reference audio file exists
-        ref_audio_path = current_dir / ("output/audio/refers/1.wav" if REFER_MODE == 2 else f"output/audio/refers/{number}.wav")
+        # Use configured temp directory for reference audio
+        temp_audio_dir = get_storage_paths()['temp']
+        ref_audio_path = Path(temp_audio_dir) / "audio" / "refers" / ("1.wav" if REFER_MODE == 2 else f"{number}.wav")
         if not ref_audio_path.exists():
             # If the file does not exist, try to extract the reference audio
             try:
@@ -102,7 +105,9 @@ def gpt_sovits_tts_for_videolingo(text, save_as, number, task_df):
     success = gpt_sovits_tts(text, TARGET_LANGUAGE, save_as, ref_audio_path, prompt_lang, prompt_text)
     if not success and REFER_MODE == 3:
         rprint(f"[bold red]TTS request failed, switching back to mode 2 and retrying[/bold red]")
-        ref_audio_path = current_dir / "output/audio/refers/1.wav"
+        # Use configured temp directory for fallback reference audio
+        temp_audio_dir = get_storage_paths()['temp']
+        ref_audio_path = Path(temp_audio_dir) / "audio" / "refers" / "1.wav"
         gpt_sovits_tts(text, TARGET_LANGUAGE, save_as, ref_audio_path, prompt_lang, prompt_text)
 
 

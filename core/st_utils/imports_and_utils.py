@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 import io, zipfile
-from core.st_utils.download_video_section import download_video_section
+# Video download functionality moved to video_input_section
 from core.st_utils.sidebar_setting import page_setting
 from translations.translations import translate as t
 

@@ -12,9 +12,13 @@ from core.utils.models import *
 
 console = Console()
 
-DUB_VIDEO = "output/output_dub.mp4"
-DUB_SUB_FILE = 'output/dub.srt'
-DUB_AUDIO = 'output/dub.mp3'
+# Get configured output directory  
+import os
+from core.utils.config_utils import get_storage_paths
+_paths = get_storage_paths()
+DUB_VIDEO = os.path.join(_paths['output'], "output_dub.mp4")
+DUB_SUB_FILE = os.path.join(_paths['output'], 'dub.srt')
+DUB_AUDIO = os.path.join(_paths['output'], 'dub.mp3')
 
 TRANS_FONT_SIZE = 17
 TRANS_FONT_NAME = 'Arial'

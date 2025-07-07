@@ -54,45 +54,64 @@ def similar(a, b):
 @check_file_exists(_4_2_TRANSLATION)
 def translate_all():
     console.print("[bold green]Start Translating All...[/bold green]")
-    chunks = split_chunks_by_chars(chunk_size=600, max_i=10)
+    chunks = split_chunks_by_chars(chunk_size=600, max_i=15)
+    
+    # ------------
+    # Batch translate to reduce LLM calls
+    # ------------
+    try:
+        batch_size = load_key("batch_translate_size")
+    except:
+        batch_size = 15  # Default batch size
+    # Process chunks per LLM call to avoid rate limiting
     with open(_4_1_TERMINOLOGY, 'r', encoding='utf-8') as file:
         theme_prompt = json.load(file).get('theme')
 
-    # 🔄 Use concurrent execution for translation
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task("[cyan]Translating chunks...", total=len(chunks))
-        with concurrent.futures.ThreadPoolExecutor(max_workers=load_key("max_workers")) as executor:
-            futures = []
-            for i, chunk in enumerate(chunks):
-                future = executor.submit(translate_chunk, chunk, chunks, theme_prompt, i)
-                futures.append(future)
-            results = []
-            for future in concurrent.futures.as_completed(futures):
-                results.append(future.result())
-                progress.update(task, advance=1)
-
-    results.sort(key=lambda x: x[0])  # Sort results based on original order
+    # 🔄 Process chunks in batches to reduce LLM calls
+    all_results = {}
     
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
+        total_batches = (len(chunks) + batch_size - 1) // batch_size
+        task = progress.add_task(f"[cyan]Processing {total_batches} batches...", total=total_batches)
+        
+        for batch_start in range(0, len(chunks), batch_size):
+            batch_end = min(batch_start + batch_size, len(chunks))
+            batch_chunks = chunks[batch_start:batch_end]
+            
+            # Prepare batch data
+            chunks_data = []
+            for i, chunk in enumerate(batch_chunks):
+                chunk_index = batch_start + i
+                chunks_data.append({
+                    'chunk': chunk,
+                    'previous_content': get_previous_content(chunks, chunk_index),
+                    'after_content': get_after_content(chunks, chunk_index),
+                    'things_to_note': search_things_to_note_in_prompt(chunk),
+                    'index': chunk_index
+                })
+            
+            # Import batch translation function
+            from core.translate_lines import translate_lines_batch
+            
+            # Batch translate
+            console.print(f"[cyan]🔄 Processing batch {batch_start//batch_size + 1}/{total_batches} ({len(batch_chunks)} chunks)...[/cyan]")
+            batch_results = translate_lines_batch(chunks_data, theme_prompt)
+            
+            # Merge results
+            all_results.update(batch_results)
+            progress.update(task, advance=1)
+
     # 💾 Save results to lists and Excel file
     src_text, trans_text = [], []
     for i, chunk in enumerate(chunks):
         chunk_lines = chunk.split('\n')
         src_text.extend(chunk_lines)
         
-        # Calculate similarity between current chunk and translation results
-        chunk_text = ''.join(chunk_lines).lower()
-        matching_results = [(r, similar(''.join(r[1].split('\n')).lower(), chunk_text)) 
-                          for r in results]
-        best_match = max(matching_results, key=lambda x: x[1])
-        
-        # Check similarity and handle exceptions
-        if best_match[1] < 0.9:
-            console.print(f"[yellow]Warning: No matching translation found for chunk {i}[/yellow]")
-            raise ValueError(f"Translation matching failed (chunk {i})")
-        elif best_match[1] < 1.0:
-            console.print(f"[yellow]Warning: Similar match found (chunk {i}, similarity: {best_match[1]:.3f})[/yellow]")
-            
-        trans_text.extend(best_match[0][2].split('\n'))
+        if i in all_results:
+            trans_text.extend(all_results[i]['translation'].split('\n'))
+        else:
+            console.print(f"[red]❌ Missing translation for chunk {i}[/red]")
+            raise ValueError(f"Translation failed for chunk {i}")
     
     # Trim long translation text
     df_text = pd.read_excel(_2_CLEANED_CHUNKS)

@@ -1,29 +1,52 @@
 # ------------------------------------------
-# 定义中间产出文件
+# 获取配置的路径
+# ------------------------------------------
+import os
+from .config_utils import get_storage_paths
+
+def _get_paths():
+    """Get configured storage paths"""
+    return get_storage_paths()
+
+def _get_temp_path():
+    """Get temp directory path"""
+    return _get_paths()['temp']
+
+def _get_output_path():
+    """Get output directory path"""
+    return _get_paths()['output']
+
+# ------------------------------------------
+# 定义中间产出文件 (使用temp目录)
 # ------------------------------------------
 
-_2_CLEANED_CHUNKS = "output/log/cleaned_chunks.xlsx"
-_3_1_SPLIT_BY_NLP = "output/log/split_by_nlp.txt"
-_3_2_SPLIT_BY_MEANING = "output/log/split_by_meaning.txt"
-_4_1_TERMINOLOGY = "output/log/terminology.json"
-_4_2_TRANSLATION = "output/log/translation_results.xlsx"
-_5_SPLIT_SUB = "output/log/translation_results_for_subtitles.xlsx"
-_5_REMERGED = "output/log/translation_results_remerged.xlsx"
+_2_CLEANED_CHUNKS = os.path.join(_get_temp_path(), "log", "cleaned_chunks.xlsx")
+_3_1_SPLIT_BY_NLP = os.path.join(_get_temp_path(), "log", "split_by_nlp.txt")
+_3_2_SPLIT_BY_MEANING = os.path.join(_get_temp_path(), "log", "split_by_meaning.txt")
+_4_1_TERMINOLOGY = os.path.join(_get_temp_path(), "log", "terminology.json")
+_4_2_TRANSLATION = os.path.join(_get_temp_path(), "log", "translation_results.xlsx")
+_5_SPLIT_SUB = os.path.join(_get_temp_path(), "log", "translation_results_for_subtitles.xlsx")
+_5_REMERGED = os.path.join(_get_temp_path(), "log", "translation_results_remerged.xlsx")
 
-_8_1_AUDIO_TASK = "output/audio/tts_tasks.xlsx"
+_8_1_AUDIO_TASK = os.path.join(_get_temp_path(), "audio", "tts_tasks.xlsx")
 
 
 # ------------------------------------------
-# 定义音频文件
+# 定义音频文件 (使用temp目录)
 # ------------------------------------------
-_OUTPUT_DIR = "output"
-_AUDIO_DIR = "output/audio"
-_RAW_AUDIO_FILE = "output/audio/raw.mp3"
-_VOCAL_AUDIO_FILE = "output/audio/vocal.mp3"
-_BACKGROUND_AUDIO_FILE = "output/audio/background.mp3"
-_AUDIO_REFERS_DIR = "output/audio/refers"
-_AUDIO_SEGS_DIR = "output/audio/segs"
-_AUDIO_TMP_DIR = "output/audio/tmp"
+_TEMP_DIR = _get_temp_path()
+_AUDIO_DIR = os.path.join(_get_temp_path(), "audio")
+_RAW_AUDIO_FILE = os.path.join(_get_temp_path(), "audio", "raw.mp3")
+_VOCAL_AUDIO_FILE = os.path.join(_get_temp_path(), "audio", "vocal.mp3")
+_BACKGROUND_AUDIO_FILE = os.path.join(_get_temp_path(), "audio", "background.mp3")
+_AUDIO_REFERS_DIR = os.path.join(_get_temp_path(), "audio", "refers")
+_AUDIO_SEGS_DIR = os.path.join(_get_temp_path(), "audio", "segs")
+_AUDIO_TMP_DIR = os.path.join(_get_temp_path(), "audio", "tmp")
+
+# ------------------------------------------
+# 定义输出文件 (使用output目录)
+# ------------------------------------------
+_OUTPUT_DIR = _get_output_path()
 
 # ------------------------------------------
 # 导出

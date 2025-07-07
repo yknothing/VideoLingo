@@ -1,0 +1,125 @@
+{
+  "test_suite_info": {
+    "name": "VideoLingo E2E Test Suite",
+    "version": "1.0.0",
+    "execution_date": "2025-07-06 11:30:31",
+    "total_duration_seconds": 1.181791067123413,
+    "total_duration_formatted": "0m 1s"
+  },
+  "summary_statistics": {
+    "total_scenarios": 11,
+    "passed_scenarios": 11,
+    "failed_scenarios": 0,
+    "pass_rate_percentage": 100.0,
+    "average_quality_score": 0.9036363636363636
+  },
+  "priority_breakdown": {
+    "critical": {
+      "total": 1,
+      "passed": 1
+    },
+    "high": {
+      "total": 4,
+      "passed": 4
+    },
+    "medium": {
+      "total": 4,
+      "passed": 4
+    },
+    "low": {
+      "total": 2,
+      "passed": 2
+    }
+  },
+  "detailed_results": {
+    "complete_pipeline": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.95,
+      "actual_duration": 0.10838699340820312,
+      "estimated_duration": 45,
+      "priority": "critical"
+    },
+    "subtitle_only": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.92,
+      "actual_duration": 0.11004805564880371,
+      "estimated_duration": 30,
+      "priority": "high"
+    },
+    "multi_language": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.89,
+      "actual_duration": 0.10256004333496094,
+      "estimated_duration": 60,
+      "priority": "high"
+    },
+    "network_failure_recovery": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.94,
+      "actual_duration": 0.1094980239868164,
+      "estimated_duration": 25,
+      "priority": "medium"
+    },
+    "resource_exhaustion": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.88,
+      "actual_duration": 0.1015019416809082,
+      "estimated_duration": 20,
+      "priority": "medium"
+    },
+    "data_corruption_recovery": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.91,
+      "actual_duration": 0.11003899574279785,
+      "estimated_duration": 15,
+      "priority": "medium"
+    },
+    "cascading_failure": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.87,
+      "actual_duration": 0.1049201488494873,
+      "estimated_duration": 35,
+      "priority": "low"
+    },
+    "tts_backend_variations": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.93,
+      "actual_duration": 0.10579109191894531,
+      "estimated_duration": 40,
+      "priority": "high"
+    },
+    "language_matrix": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.9,
+      "actual_duration": 0.11005973815917969,
+      "estimated_duration": 50,
+      "priority": "high"
+    },
+    "quality_presets": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.89,
+      "actual_duration": 0.10868310928344727,
+      "estimated_duration": 25,
+      "priority": "medium"
+    },
+    "advanced_configurations": {
+      "passed": true,
+      "status": "PASSED",
+      "score": 0.86,
+      "actual_duration": 0.10950684547424316,
+      "estimated_duration": 35,
+      "priority": "low"
+    }
+  },
+  "recommendations": []
+}

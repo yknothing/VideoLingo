@@ -1,10 +1,99 @@
 import json
 from core.utils import *
 
+# ------------
+# Security utilities for prompt injection prevention
+# ------------
+
+def sanitize_user_input(user_input, max_length=10000):
+    """
+    Sanitize user input to prevent prompt injection attacks
+    
+    Args:
+        user_input: User-provided text content
+        max_length: Maximum allowed length
+    
+    Returns:
+        Sanitized input safe for use in prompts
+    """
+    if not user_input:
+        return ""
+    
+    # Truncate if too long
+    if len(user_input) > max_length:
+        user_input = user_input[:max_length] + "..."
+    
+    # Remove potential prompt injection patterns
+    # These patterns could be used to break out of user input sections
+    dangerous_patterns = [
+        r'</text>',
+        r'</subtitles>',
+        r'</split_this_sentence>',
+        r'</previous_content>',
+        r'</subsequent_content>',
+        r'```json',
+        r'```',
+        r'## Role',
+        r'## Task',
+        r'## Steps',
+        r'## Output',
+        r'## INPUT',
+        r'You are',
+        r'Your task is',
+        r'Please ignore',
+        r'Forget previous',
+        r'System:',
+        r'Human:',
+        r'Assistant:',
+    ]
+    
+    import re
+    for pattern in dangerous_patterns:
+        user_input = re.sub(pattern, '[FILTERED]', user_input, flags=re.IGNORECASE)
+    
+    return user_input
+
+def wrap_user_content(content, tag_name="user_content"):
+    """
+    Safely wrap user content in XML-like tags to prevent injection
+    
+    Args:
+        content: User-provided content
+        tag_name: Tag name to use for wrapping
+    
+    Returns:
+        Safely wrapped content
+    """
+    sanitized = sanitize_user_input(content)
+    return f"<{tag_name}>\n{sanitized}\n</{tag_name}>"
+
+def safe_format_prompt(template, **kwargs):
+    """
+    Safely format prompt template with user-provided values
+    
+    Args:
+        template: Prompt template string
+        **kwargs: Values to substitute in template
+    
+    Returns:
+        Formatted prompt with sanitized user inputs
+    """
+    # Sanitize all user-provided values
+    safe_kwargs = {}
+    for key, value in kwargs.items():
+        if isinstance(value, str):
+            safe_kwargs[key] = sanitize_user_input(value)
+        else:
+            safe_kwargs[key] = value
+    
+    return template.format(**safe_kwargs)
+
 ## ================================================================
 # @ step4_splitbymeaning.py
 def get_split_prompt(sentence, num_parts = 2, word_limit = 20):
     language = load_key("whisper.detected_language")
+    # Sanitize sentence input
+    sentence = sanitize_user_input(sentence)
     split_prompt = f"""
 ## Role
 You are a professional Netflix subtitle splitter in **{language}**.
@@ -24,9 +113,7 @@ Split the given subtitle text into **{num_parts}** parts, each less than **{word
 4. Choose the best splitting approach
 
 ## Given Text
-<split_this_sentence>
-{sentence}
-</split_this_sentence>
+{wrap_user_content(sentence, "split_this_sentence")}
 
 ## Output in only JSON format and no other text
 ```json
@@ -53,6 +140,9 @@ Note: Start you answer with ```json and end with ```, do not add any other text.
 def get_summary_prompt(source_content, custom_terms_json=None):
     src_lang = load_key("whisper.detected_language")
     tgt_lang = load_key("target_language")
+    
+    # Sanitize source content
+    source_content = sanitize_user_input(source_content)
     
     # add custom terms note
     terms_note = ""
@@ -85,9 +175,7 @@ Steps:
    - Extract less than 15 terms
 
 ## INPUT
-<text>
-{source_content}
-</text>
+{wrap_user_content(source_content, "text")}
 
 ## Output in only JSON format and no other text
 {{
@@ -143,6 +231,9 @@ def generate_shared_prompt(previous_content_prompt, after_content_prompt, summar
 
 def get_prompt_faithfulness(lines, shared_prompt):
     TARGET_LANGUAGE = load_key("target_language")
+    # Sanitize inputs
+    lines = sanitize_user_input(lines)
+    shared_prompt = sanitize_user_input(shared_prompt)
     # Split lines by \n
     line_splits = lines.split('\n')
     
@@ -173,9 +264,7 @@ We have a segment of original {src_language} subtitles that need to be directly 
 </translation_principles>
 
 ## INPUT
-<subtitles>
-{lines}
-</subtitles>
+{wrap_user_content(lines, "subtitles")}
 
 ## Output in only JSON format and no other text
 ```json
@@ -189,6 +278,9 @@ Note: Start you answer with ```json and end with ```, do not add any other text.
 
 def get_prompt_expressiveness(faithfulness_result, lines, shared_prompt):
     TARGET_LANGUAGE = load_key("target_language")
+    # Sanitize inputs
+    lines = sanitize_user_input(lines)
+    shared_prompt = sanitize_user_input(shared_prompt)
     json_format = {
         key: {
             "origin": value["origin"],
@@ -233,9 +325,7 @@ Please use a two-step thinking process to handle the text line by line:
 </Translation Analysis Steps>
    
 ## INPUT
-<subtitles>
-{lines}
-</subtitles>
+{wrap_user_content(lines, "subtitles")}
 
 ## Output in only JSON format and no other text
 ```json
@@ -255,15 +345,21 @@ def get_align_prompt(src_sub, tr_sub, src_part):
     src_splits = src_part.split('\n')
     num_parts = len(src_splits)
     src_part = src_part.replace('\n', ' [br] ')
-    align_parts_json = ','.join(
-        f'''
+    # Build align_parts_json without f-string containing backslashes
+    align_parts_list = []
+    for i in range(num_parts):
+        part_template = '''
         {{
-            "src_part_{i+1}": "{src_splits[i]}",
-            "target_part_{i+1}": "Corresponding aligned {targ_lang} subtitle part"
-        }}''' for i in range(num_parts)
-    )
+            "src_part_{part_num}": "{src_text}",
+            "target_part_{part_num}": "Corresponding aligned {targ_lang} subtitle part"
+        }}'''.format(part_num=i+1, src_text=src_splits[i], targ_lang=targ_lang)
+        align_parts_list.append(part_template)
+    align_parts_json = ','.join(align_parts_list)
 
-    align_prompt = f'''
+    # Build the input content without f-string backslashes
+    input_content = src_lang + ' Original: "' + sanitize_user_input(src_sub) + '"' + '\n' + targ_lang + ' Original: "' + sanitize_user_input(tr_sub) + '"' + '\n' + 'Pre-processed ' + src_lang + ' Subtitles ([br] indicates split points): ' + sanitize_user_input(src_part)
+    
+    align_prompt_template = '''
 ## Role
 You are a Netflix subtitle alignment expert fluent in both {src_lang} and {targ_lang}.
 
@@ -277,11 +373,7 @@ Your task is to create the best splitting scheme for the {targ_lang} subtitles b
 4. Do not add comments or explanations in the translation, as the subtitles are for the audience to read
 
 ## INPUT
-<subtitles>
-{src_lang} Original: "{src_sub}"
-{targ_lang} Original: "{tr_sub}"
-Pre-processed {src_lang} Subtitles ([br] indicates split points): {src_part}
-</subtitles>
+{input_section}
 
 ## Output in only JSON format and no other text
 ```json
@@ -294,7 +386,14 @@ Pre-processed {src_lang} Subtitles ([br] indicates split points): {src_part}
 ```
 
 Note: Start you answer with ```json and end with ```, do not add any other text.
-'''.strip()
+'''
+    
+    align_prompt = align_prompt_template.format(
+        src_lang=src_lang,
+        targ_lang=targ_lang,
+        input_section=wrap_user_content(input_content, "subtitles"),
+        align_parts_json=align_parts_json
+    ).strip()
     return align_prompt
 
 ## ================================================================
@@ -307,16 +406,16 @@ def get_subtitle_trim_prompt(text, duration):
     - "Let's discuss the various different perspectives on this topic" can be shortened to "Let's discuss different perspectives on this topic"
     - "Can you describe in detail your experience from yesterday" can be shortened to "Can you describe yesterday's experience" '''
 
-    trim_prompt = f'''
+    # Build input content without f-string backslashes
+    input_content = 'Subtitle: "' + sanitize_user_input(text) + '"' + '\n' + 'Duration: ' + str(duration) + ' seconds'
+    
+    trim_prompt_template = '''
 ## Role
 You are a professional subtitle editor, editing and optimizing lengthy subtitles that exceed voiceover time before handing them to voice actors. 
 Your expertise lies in cleverly shortening subtitles slightly while ensuring the original meaning and structure remain unchanged.
 
 ## INPUT
-<subtitles>
-Subtitle: "{text}"
-Duration: {duration} seconds
-</subtitles>
+{input_section}
 
 ## Processing Rules
 {rule}
@@ -335,7 +434,12 @@ Please follow these steps and provide the results in the JSON output:
 ```
 
 Note: Start you answer with ```json and end with ```, do not add any other text.
-'''.strip()
+'''
+    
+    trim_prompt = trim_prompt_template.format(
+        input_section=wrap_user_content(input_content, "subtitles"),
+        rule=rule
+    ).strip()
     return trim_prompt
 
 ## ================================================================
@@ -351,7 +455,7 @@ Clean the given text by:
 2. Preserve the original meaning
 
 ## INPUT
-{text}
+{wrap_user_content(text, "text")}
 
 ## Output in only JSON format and no other text
 ```json

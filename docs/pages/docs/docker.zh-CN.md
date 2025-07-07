@@ -1,64 +1,247 @@
-# Docker安装
+# 🐳 Docker 部署指南
 
-VideoLingo 提供了Dockerfile,可自行使用Dockerfile打包目前VideoLingo。以下是打包和运行的详细说明:
+VideoLingo 提供了完整的 Docker 部署方案，支持一键自动部署。
 
-## 系统要求
+## 📋 前置要求
 
-- CUDA版本 > 12.4
-- NVIDIA Driver版本> 550
+### 系统要求
+- Docker Engine 20.10+
+- Docker Compose V2
+- NVIDIA Container Toolkit (可选，用于 GPU 加速)
 
-## 构建和运行Docker镜像或者从DokerHub拉取
+### 安装 Docker
+#### Ubuntu/Debian
+```bash
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+```
+
+#### CentOS/RHEL
+```bash
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo yum install docker-ce docker-ce-cli containerd.io
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+#### Windows
+下载并安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+#### macOS
+```bash
+brew install --cask docker
+```
+
+### GPU 支持 (可选)
+如需 GPU 加速，请安装 NVIDIA Container Toolkit：
 
 ```bash
-# 构建Docker镜像
+# Ubuntu/Debian
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart docker
+```
+
+## 🚀 一键自动部署
+
+VideoLingo 提供了自动部署脚本，支持跨平台一键部署。
+
+### Linux/macOS
+```bash
+# 克隆项目
+git clone https://github.com/Huanshere/VideoLingo.git
+cd VideoLingo
+
+# 配置 API 密钥 (编辑 config.yaml)
+# 对于 OpenRouter，请将以下配置取消注释并修改：
+# api:
+#   key: 'sk-or-v1-your-openrouter-api-key'
+#   base_url: 'https://openrouter.ai/api/v1'
+#   model: 'anthropic/claude-3.5-sonnet'
+#   llm_support_json: true
+
+# 运行自动部署脚本
+./deploy.sh
+```
+
+### Windows
+```cmd
+# 克隆项目
+git clone https://github.com/Huanshere/VideoLingo.git
+cd VideoLingo
+
+# 配置 API 密钥 (编辑 config.yaml)
+# 运行自动部署脚本
+deploy.bat
+```
+
+## 📝 部署脚本功能
+
+自动部署脚本会执行以下操作：
+
+1. **环境检查**
+   - 检查 Docker 是否已安装
+   - 检查 Docker Compose 是否可用
+   - 检测 NVIDIA GPU 支持情况
+
+2. **环境准备**
+   - 创建必要的目录 (`output`, `_model_cache`)
+   - 停止并清理已存在的容器
+
+3. **部署应用**
+   - 构建 Docker 镜像
+   - 启动服务容器
+   - 配置数据卷和端口映射
+
+4. **验证部署**
+   - 检查容器运行状态
+   - 显示访问地址和日志信息
+
+## 🔧 手动部署
+
+如果需要手动控制部署过程，可以使用以下命令：
+
+### 使用 Docker Compose (推荐)
+```bash
+# 构建并启动服务
+docker-compose up -d --build
+
+# 查看日志
+docker-compose logs -f videolingo
+
+# 停止服务
+docker-compose down
+```
+
+### 使用 Docker Run
+```bash
+# 构建镜像
 docker build -t videolingo .
 
-# 运行Docker容器
-docker run -d -p 8501:8501 --gpus all videolingo
+# 运行容器 (带 GPU 支持)
+docker run -d --name videolingo \
+  --gpus all \
+  -p 8501:8501 \
+  -v $(pwd)/config.yaml:/app/config.yaml \
+  -v $(pwd)/output:/app/output \
+  -v $(pwd)/custom_terms.xlsx:/app/custom_terms.xlsx \
+  -v $(pwd)/_model_cache:/app/_model_cache \
+  --restart unless-stopped \
+  videolingo
+
+# 运行容器 (仅 CPU)
+docker run -d --name videolingo \
+  -p 8501:8501 \
+  -v $(pwd)/config.yaml:/app/config.yaml \
+  -v $(pwd)/output:/app/output \
+  -v $(pwd)/custom_terms.xlsx:/app/custom_terms.xlsx \
+  -v $(pwd)/_model_cache:/app/_model_cache \
+  --restart unless-stopped \
+  videolingo
 ```
 
-### 从DockerHub拉取
+## 🌐 访问应用
 
-您可以直接从DockerHub拉取预构建的VideoLingo镜像:
+部署成功后，通过以下地址访问 VideoLingo：
+
+- **本地访问**: http://localhost:8501
+- **局域网访问**: http://[你的IP地址]:8501
+
+## 📊 监控和管理
+
+### 查看容器状态
+```bash
+docker ps | grep videolingo
+```
+
+### 查看日志
+```bash
+docker logs -f videolingo
+```
+
+### 进入容器
+```bash
+docker exec -it videolingo bash
+```
+
+### 更新应用
+```bash
+# 停止容器
+docker-compose down
+
+# 拉取最新代码
+git pull
+
+# 重新构建并启动
+docker-compose up -d --build
+```
+
+## 🔧 配置说明
+
+### 环境变量
+在 `docker-compose.yml` 中可以设置以下环境变量：
+
+```yaml
+environment:
+  - PYTHONUNBUFFERED=1  # 实时显示 Python 输出
+```
+
+### 数据卷映射
+以下目录会被映射到主机：
+
+- `./config.yaml` → `/app/config.yaml` (配置文件)
+- `./output` → `/app/output` (输出文件)
+- `./custom_terms.xlsx` → `/app/custom_terms.xlsx` (自定义术语)
+- `./_model_cache` → `/app/_model_cache` (模型缓存)
+
+### 端口配置
+- 默认端口：`8501` (Streamlit 应用)
+- 如需修改端口，请编辑 `docker-compose.yml` 中的 `ports` 设置
+
+## ❓ 常见问题
+
+### GPU 支持问题
+如果 GPU 不被识别，请检查：
+1. NVIDIA 驱动是否正确安装
+2. NVIDIA Container Toolkit 是否安装
+3. Docker 是否重启
+
+### 权限问题
+如果遇到权限问题：
+```bash
+# Linux/macOS
+sudo chmod +x deploy.sh
+
+# 或添加用户到 docker 组
+sudo usermod -aG docker $USER
+```
+
+### 端口占用
+如果 8501 端口被占用：
+1. 修改 `docker-compose.yml` 中的端口映射
+2. 或停止占用端口的服务
+
+### 内存不足
+对于大模型处理，建议：
+- 至少 8GB 内存
+- 如使用 GPU，建议 8GB+ 显存
+
+## 🔄 卸载
+
+完全清理 VideoLingo Docker 部署：
 
 ```bash
-docker pull rqlove/videolingo:latest
+# 停止并删除容器
+docker-compose down
+
+# 删除镜像
+docker rmi videolingo
+
+# 清理数据 (可选)
+rm -rf output _model_cache
 ```
-
-拉取完成后,使用以下命令运行容器:
-
-```bash
-docker run -d -p 8501:8501 --gpus all rqlove/videolingo:latest
-```
-
-注意: 
-- `-d` 参数使容器在后台运行
-- `-p 8501:8501` 将容器的8501端口映射到主机的8501端口
-- `--gpus all` 启用所有可用的GPU支持
-- 确保使用完整的镜像名称 `rqlove/videolingo:latest`
-
-## 模型
-
-whisper 模型不包含在镜像中,会在容器首次运行时自动下载。如果您希望跳过自动下载过程,可以从以下链接下载模型权重:
-
-- [Google Drive链接](https://drive.google.com/file/d/10gPu6qqv92WbmIMo1iJCqQxhbd1ctyVw/view?usp=drive_link)
-- [百度网盘链接](https://pan.baidu.com/s/1hZjqSGVn3z_WSg41-6hCqA?pwd=2kgs)
-
-下载后,使用以下命令运行容器,将模型文件挂载到容器中:
-
-```bash
-docker run -d -p 8501:8501 --gpus all -v /path/to/your/model:/app/_model_cache rqlove/videolingo:latest
-```
-
-请注意将 `/path/to/your/model` 替换为您实际下载模型文件的本地路径。
-
-## 其他说明
-
-- 基础镜像: nvidia/cuda:12.4.1-devel-ubuntu20.04
-- Python版本: 3.10
-- 预装软件: git, curl, sudo, ffmpeg, fonts-noto等
-- PyTorch版本: 2.0.0 (CUDA 11.8)
-- 暴露端口: 8501 (Streamlit应用)
-
-如需更多详细信息,请参考Dockerfile。
 

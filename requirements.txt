@@ -18,6 +18,7 @@ streamlit==1.38.0
 yt-dlp
 json-repair
 ruamel.yaml
+python-dotenv
 InquirerPy
 autocorrect-py
 ctranslate2==4.4.0
