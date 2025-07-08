@@ -9,6 +9,20 @@ from core.utils.security_utils import (
     validate_proxy_url,
 )
 
+# Import modular components for enhanced functionality
+try:
+    from core.download import (
+        VideoFileValidator,
+        VideoFormatSelector,
+        DownloadErrorHandler,
+        PartialDownloadCleaner,
+    )
+
+    MODULAR_COMPONENTS_AVAILABLE = True
+except ImportError:
+    # Fallback to legacy implementation if modular components not available
+    MODULAR_COMPONENTS_AVAILABLE = False
+
 
 def update_ytdlp():
     try:
@@ -35,6 +49,16 @@ def validate_video_file(file_path, expected_min_size_mb=1):
     Validate video file integrity and size
     Returns: (is_valid, error_message)
     """
+    # Use modular validator if available for enhanced validation
+    if MODULAR_COMPONENTS_AVAILABLE:
+        try:
+            validator = VideoFileValidator(min_size_mb=expected_min_size_mb)
+            return validator.validate_video_file(file_path)
+        except Exception:
+            # Fallback to legacy implementation
+            pass
+
+    # Legacy validation implementation
     if not os.path.exists(file_path):
         return False, f"File does not exist: {file_path}"
 
@@ -77,6 +101,16 @@ def cleanup_partial_downloads(save_path):
     """
     Clean up partial downloads and temporary files
     """
+    # Use modular cleaner if available for enhanced cleanup
+    if MODULAR_COMPONENTS_AVAILABLE:
+        try:
+            cleaner = PartialDownloadCleaner()
+            return cleaner.cleanup_partial_downloads(save_path)
+        except Exception:
+            # Fallback to legacy implementation
+            pass
+
+    # Legacy cleanup implementation
     partial_patterns = ["*.part", "*.tmp", "*.download", "*.f*", "*.ytdl"]
     cleaned_files = []
 
@@ -101,6 +135,17 @@ def find_most_recent_video_file(save_path):
     """
     from core.utils.config_utils import load_key
 
+    # Use modular validator if available for enhanced file finding
+    if MODULAR_COMPONENTS_AVAILABLE:
+        try:
+            allowed_formats = load_key("allowed_video_formats")
+            validator = VideoFileValidator()
+            return validator.find_most_recent_video_file(save_path, allowed_formats)
+        except Exception:
+            # Fallback to legacy implementation
+            pass
+
+    # Legacy implementation
     allowed_formats = load_key("allowed_video_formats")
     video_files = []
 
@@ -140,6 +185,16 @@ def find_best_video_file(save_path, allowed_formats):
     Find the best video file when multiple files exist
     Priority: largest valid file with proper format
     """
+    # Use modular validator if available for enhanced file finding
+    if MODULAR_COMPONENTS_AVAILABLE:
+        try:
+            validator = VideoFileValidator()
+            return validator.find_best_video_file(save_path, allowed_formats)
+        except Exception:
+            # Fallback to legacy implementation
+            pass
+
+    # Legacy implementation
     candidates = []
 
     for file_path in glob.glob(os.path.join(save_path, "*")):
@@ -174,6 +229,16 @@ def get_optimal_format(resolution):
     获取针对VideoLingo场景优化的视频格式
     优先选择H.264+AAC组合，确保最佳处理性能
     """
+    # Use modular format selector if available for enhanced format selection
+    if MODULAR_COMPONENTS_AVAILABLE:
+        try:
+            selector = VideoFormatSelector()
+            return selector.get_optimal_format(str(resolution))
+        except Exception:
+            # Fallback to legacy implementation
+            pass
+
+    # Legacy format selection implementation
     if resolution == "best":
         # 最佳质量：按分辨率优先级选择最高可用分辨率
         return "bestvideo[height<=2160][vcodec^=avc1]/bestvideo[height<=2160][vcodec^=h264]/bestvideo[height<=1440][vcodec^=avc1]/bestvideo[height<=1440][vcodec^=h264]/bestvideo[height<=1080][vcodec^=avc1]/bestvideo[height<=1080][vcodec^=h264]/bestvideo[height<=720][vcodec^=avc1]/bestvideo[height<=720][vcodec^=h264]/bestvideo[ext=mp4]/bestvideo+bestaudio[acodec^=mp4a]/bestaudio[ext=m4a]/bestaudio/best[vcodec^=avc1]/best[vcodec^=h264]/best[ext=mp4]/best"
@@ -191,6 +256,19 @@ def categorize_download_error(error_msg):
     Categorize download errors to determine retry strategy
     Returns: (category, is_retryable, suggested_wait_time)
     """
+    # Use modular error handler if available for enhanced error categorization
+    if MODULAR_COMPONENTS_AVAILABLE:
+        try:
+            handler = DownloadErrorHandler()
+            category, is_retryable, wait_time = handler.categorize_download_error(
+                error_msg
+            )
+            return category.value, is_retryable, wait_time
+        except Exception:
+            # Fallback to legacy implementation
+            pass
+
+    # Legacy error categorization implementation
     error_msg_lower = error_msg.lower()
 
     if any(
@@ -222,6 +300,18 @@ def intelligent_retry_download(download_func, max_retries=3, initial_wait=5):
     """
     Intelligent retry mechanism with exponential backoff
     """
+    # Use modular error handler if available for enhanced retry logic
+    if MODULAR_COMPONENTS_AVAILABLE:
+        try:
+            handler = DownloadErrorHandler()
+            return handler.intelligent_retry_download(
+                download_func, max_retries, initial_wait
+            )
+        except Exception:
+            # Fallback to legacy implementation
+            pass
+
+    # Legacy retry implementation
     import time
 
     for attempt in range(max_retries + 1):

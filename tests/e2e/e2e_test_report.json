@@ -2,8 +2,8 @@
   "test_suite_info": {
     "name": "VideoLingo E2E Test Suite",
     "version": "1.0.0",
-    "execution_date": "2025-07-06 11:30:31",
-    "total_duration_seconds": 1.181791067123413,
+    "execution_date": "2025-07-07 23:26:10",
+    "total_duration_seconds": 1.1722800731658936,
     "total_duration_formatted": "0m 1s"
   },
   "summary_statistics": {
@@ -36,7 +36,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.95,
-      "actual_duration": 0.10838699340820312,
+      "actual_duration": 0.10168981552124023,
       "estimated_duration": 45,
       "priority": "critical"
     },
@@ -44,7 +44,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.92,
-      "actual_duration": 0.11004805564880371,
+      "actual_duration": 0.10210895538330078,
       "estimated_duration": 30,
       "priority": "high"
     },
@@ -52,7 +52,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.89,
-      "actual_duration": 0.10256004333496094,
+      "actual_duration": 0.10979104042053223,
       "estimated_duration": 60,
       "priority": "high"
     },
@@ -60,7 +60,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.94,
-      "actual_duration": 0.1094980239868164,
+      "actual_duration": 0.10117506980895996,
       "estimated_duration": 25,
       "priority": "medium"
     },
@@ -68,7 +68,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.88,
-      "actual_duration": 0.1015019416809082,
+      "actual_duration": 0.10627317428588867,
       "estimated_duration": 20,
       "priority": "medium"
     },
@@ -76,7 +76,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.91,
-      "actual_duration": 0.11003899574279785,
+      "actual_duration": 0.10823607444763184,
       "estimated_duration": 15,
       "priority": "medium"
     },
@@ -84,7 +84,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.87,
-      "actual_duration": 0.1049201488494873,
+      "actual_duration": 0.10882425308227539,
       "estimated_duration": 35,
       "priority": "low"
     },
@@ -92,7 +92,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.93,
-      "actual_duration": 0.10579109191894531,
+      "actual_duration": 0.10769081115722656,
       "estimated_duration": 40,
       "priority": "high"
     },
@@ -100,7 +100,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.9,
-      "actual_duration": 0.11005973815917969,
+      "actual_duration": 0.10884785652160645,
       "estimated_duration": 50,
       "priority": "high"
     },
@@ -108,7 +108,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.89,
-      "actual_duration": 0.10868310928344727,
+      "actual_duration": 0.10812497138977051,
       "estimated_duration": 25,
       "priority": "medium"
     },
@@ -116,7 +116,7 @@
       "passed": true,
       "status": "PASSED",
       "score": 0.86,
-      "actual_duration": 0.10950684547424316,
+      "actual_duration": 0.10846209526062012,
       "estimated_duration": 35,
       "priority": "low"
     }
