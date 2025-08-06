@@ -4,6 +4,7 @@ import math
 from core.prompts import get_split_prompt
 from core.spacy_utils.load_nlp_model import init_nlp
 from core.utils import *
+from core.constants import MIN_SIMILARITY_THRESHOLD
 from rich.console import Console
 from rich.table import Table
 from core.utils.models import _3_1_SPLIT_BY_NLP, _3_2_SPLIT_BY_MEANING
@@ -35,7 +36,7 @@ def find_split_positions(original, modified):
                 max_similarity = left_similarity
                 best_split = j
 
-        if max_similarity < 0.9:
+        if max_similarity < MIN_SIMILARITY_THRESHOLD:
             console.print(f"[yellow]Warning: low similarity found at the best split point: {max_similarity}[/yellow]")
         if best_split is not None:
             split_positions.append(best_split)

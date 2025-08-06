@@ -6,10 +6,11 @@ from core.asr_backend.audio_preprocess import get_audio_duration
 from core.tts_backend.estimate_duration import init_estimator, estimate_duration
 from core.utils import *
 from core.utils.models import *
+from core.constants import SubtitleConstants, MAX_MERGE_COUNT, MIN_MERGE_THRESHOLD
 
 SRC_SRT = "output/src.srt"
 TRANS_SRT = "output/trans.srt"
-MAX_MERGE_COUNT = 5
+MAX_MERGE_COUNT = SubtitleConstants.MAX_MERGE_COUNT
 ESTIMATOR = None
 
 def calc_if_too_fast(est_dur, tol_dur, duration, tolerance):
@@ -44,7 +45,7 @@ def merge_rows(df, start_idx, merge_count):
             df.iloc[start_idx + merge_count]['tolerance']
         )
         
-        if speed_flag <= 0 or merge_count == 2:
+        if speed_flag <= 0 or merge_count == MIN_MERGE_THRESHOLD:
             df.at[start_idx + merge_count, 'cut_off'] = 1
             return merge_count + 1
         

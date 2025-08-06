@@ -81,7 +81,7 @@ def download_video_section():
                     "1080p": "1080",
                     "Best": "best"
                 }
-                target_res = load_key("ytb_resolution")
+                target_res = load_key("youtube_resolution")
                 res_options = list(res_dict.keys())
                 
                 # Find the correct default index based on config value
@@ -335,7 +335,7 @@ def download_video_section():
                     "1080p": "1080",
                     "Best": "best"
                 }
-                target_res = load_key("ytb_resolution")
+                target_res = load_key("youtube_resolution")
                 res_options = list(res_dict.keys())
                 
                 # Find the correct default index based on config value

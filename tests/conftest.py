@@ -1,5 +1,7 @@
 # VideoLingo Test Configuration
 # pytest configuration and shared fixtures
+# 安全拦截：屏蔽通过 entry points 自动加载的特定第三方插件（如 pytest_postgresql），避免环境依赖阻塞
+# 仅影响测试运行时的插件加载，不修改生产源码
 
 import os
 import sys
@@ -9,6 +11,58 @@ import pytest
 import json
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
+
+# 在导入任何可能触发插件扫描的库之前，拦截 pytest11 entry points
+try:
+    import importlib.metadata as importlib_metadata  # py3.8+
+except Exception:  # pragma: no cover
+    import importlib_metadata  # type: ignore
+
+def _iter_filtered_pytest_entry_points(group: str):
+    """过滤掉包含敏感关键词的 pytest 插件 entry points，防止自动加载导致环境依赖错误。"""
+    BLOCK_KEYWORDS = ("pytest_postgresql", "psycopg")
+    try:
+        for ep in importlib_metadata.entry_points().select(group=group):  # type: ignore[attr-defined]
+            name = getattr(ep, "name", "") or ""
+            value = getattr(ep, "value", "") or ""
+            module = getattr(ep, "module", "") or ""
+            full_text = f"{name}|{value}|{module}".lower()
+            if any(k in full_text for k in BLOCK_KEYWORDS):
+                # 跳过加载
+                continue
+            yield ep
+    except Exception:
+        # 兼容旧版 importlib_metadata API
+        eps = importlib_metadata.entry_points().get(group, [])  # type: ignore[call-arg]
+        for ep in eps:
+            name = getattr(ep, "name", "") or ""
+            value = getattr(ep, "value", "") or ""
+            module = getattr(ep, "module", "") or ""
+            full_text = f"{name}|{value}|{module}".lower()
+            if any(k in full_text for k in BLOCK_KEYWORDS):
+                continue
+            yield ep
+
+# Monkey-patch 让 pytest 在扫描 setuptools entry points 时只看到过滤后的集合
+try:
+    _orig_entry_points = importlib_metadata.entry_points
+    def _patched_entry_points(*args, **kwargs):
+        # 统一返回对象，保证 select 可用
+        class _SelectableList(list):
+            def select(self, **kw):
+                group = kw.get("group")
+                if group == "pytest11":
+                    return _SelectableList(_iter_filtered_pytest_entry_points("pytest11"))
+                # 其他分组保持原样
+                try:
+                    return _orig_entry_points().select(**kw)  # type: ignore[func-returns-value]
+                except Exception:
+                    return _SelectableList(_orig_entry_points().get(group, []))  # type: ignore[attr-defined]
+        # 无参调用时返回一个支持 select 的对象
+        return _SelectableList(_iter_filtered_pytest_entry_points("pytest11"))
+    importlib_metadata.entry_points = _patched_entry_points  # type: ignore[assignment]
+except Exception:
+    pass
 
 # Add project root to sys.path
 project_root = Path(__file__).parent.parent

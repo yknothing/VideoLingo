@@ -7,8 +7,13 @@ from core.utils.models import *
 import pandas as pd
 import soundfile as sf
 console = Console()
-from core.asr_backend.demucs_vl import demucs_audio
-from core.utils.models import *
+
+# Optional demucs import with fallback
+try:
+    from core.asr_backend.demucs_vl import demucs_audio
+except ImportError:
+    rprint("[yellow]Warning: demucs not available, some audio separation features will be disabled[/yellow]")
+    demucs_audio = None
 
 def time_to_samples(time_str, sr):
     """Unified time conversion function"""
@@ -24,7 +29,12 @@ def extract_audio(audio_data, sr, start_time, end_time, out_file):
     sf.write(out_file, audio_data[start:end], sr)
 
 def extract_refer_audio_main():
-    demucs_audio() #!!! in case demucs not run
+    # Run demucs audio separation if available
+    if demucs_audio is not None:
+        demucs_audio() #!!! in case demucs not run
+    else:
+        rprint("[yellow]⚠️ Demucs is not available. Skipping audio separation step.[/yellow]")
+    
     if os.path.exists(os.path.join(_AUDIO_SEGS_DIR, '1.wav')):
         rprint(Panel("Audio segments already exist, skipping extraction", title="Info", border_style="blue"))
         return
@@ -34,7 +44,13 @@ def extract_refer_audio_main():
     
     # Read task file and audio data
     df = pd.read_excel(_8_1_AUDIO_TASK)
-    data, sr = sf.read(_VOCAL_AUDIO_FILE)
+    
+    # Use vocal audio if available, otherwise fallback to raw audio
+    audio_file = _VOCAL_AUDIO_FILE if os.path.exists(_VOCAL_AUDIO_FILE) else _RAW_AUDIO_FILE
+    data, sr = sf.read(audio_file)
+    
+    if audio_file == _RAW_AUDIO_FILE:
+        rprint("[yellow]ℹ️ Using raw audio file (demucs separation not available)[/yellow]")
     
     with Progress(
         SpinnerColumn(),

@@ -12,6 +12,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from core.utils import *
 from core.utils.models import *
+from core.constants import (
+    AudioConstants, RetryConstants, ProcessingConstants, 
+    SPEED_FACTOR_PRECISION, MIN_AUDIO_DURATION, TIME_TOLERANCE, 
+    DURATION_MULTIPLIER, TIME_DIFF_TOLERANCE, DEFAULT_DELAY
+)
 from core.asr_backend.audio_preprocess import get_audio_duration
 from core.tts_backend.tts_main import tts_main
 
@@ -19,25 +24,22 @@ console = Console()
 
 TEMP_FILE_TEMPLATE = f"{_AUDIO_TMP_DIR}/{{}}_temp.wav"
 OUTPUT_FILE_TEMPLATE = f"{_AUDIO_SEGS_DIR}/{{}}.wav"
-WARMUP_SIZE = 5
+WARMUP_SIZE = ProcessingConstants.WARMUP_SIZE
 
-def parse_df_srt_time(time_str: str) -> float:
-    """Convert SRT time format to seconds"""
-    hours, minutes, seconds = time_str.strip().split(':')
-    seconds, milliseconds = seconds.split('.')
-    return int(hours) * 3600 + int(minutes) * 60 + int(seconds) + int(milliseconds) / 1000
+# 使用统一的时间处理工具
+from core.utils.time_utils import TimeUtils
 
 def adjust_audio_speed(input_file: str, output_file: str, speed_factor: float) -> None:
     """Adjust audio speed and handle edge cases"""
     # If the speed factor is close to 1, directly copy the file
-    if abs(speed_factor - 1.0) < 0.001:
+    if abs(speed_factor - AudioConstants.BASE_SPEED_FACTOR) < SPEED_FACTOR_PRECISION:
         shutil.copy2(input_file, output_file)
         return
         
     atempo = speed_factor
     cmd = ['ffmpeg', '-i', input_file, '-filter:a', f'atempo={atempo}', '-y', output_file]
     input_duration = get_audio_duration(input_file)
-    max_retries = 2
+    max_retries = RetryConstants.AUDIO_SPEED_MAX_RETRIES
     for attempt in range(max_retries):
         try:
             subprocess.run(cmd, check=True, stderr=subprocess.PIPE)
@@ -45,19 +47,19 @@ def adjust_audio_speed(input_file: str, output_file: str, speed_factor: float) -
             expected_duration = input_duration / speed_factor
             diff = output_duration - expected_duration
             # If the output duration exceeds the expected duration, but the input audio is less than 3 seconds, and the error is within 0.1 seconds, truncate to the expected length
-            if output_duration >= expected_duration * 1.02 and input_duration < 3 and diff <= 0.1:
+            if output_duration >= expected_duration * DURATION_MULTIPLIER and input_duration < MIN_AUDIO_DURATION and diff <= TIME_TOLERANCE:
                 audio = AudioSegment.from_wav(output_file)
                 trimmed_audio = audio[:(expected_duration * 1000)]  # pydub uses milliseconds
                 trimmed_audio.export(output_file, format="wav")
                 print(f"✂️ Trimmed to expected duration: {expected_duration:.2f} seconds")
                 return
-            elif output_duration >= expected_duration * 1.02:
+            elif output_duration >= expected_duration * DURATION_MULTIPLIER:
                 raise Exception(f"Audio duration abnormal: input file={input_file}, output file={output_file}, speed factor={speed_factor}, input duration={input_duration:.2f}s, output duration={output_duration:.2f}s")
             return
         except subprocess.CalledProcessError as e:
             if attempt < max_retries - 1:
-                rprint(f"[yellow]⚠️ Audio speed adjustment failed, retrying in 1s ({attempt + 1}/{max_retries})[/yellow]")
-                time.sleep(1)
+                rprint(f"[yellow]⚠️ Audio speed adjustment failed, retrying in {DEFAULT_DELAY}s ({attempt + 1}/{max_retries})[/yellow]")
+                time.sleep(DEFAULT_DELAY)
             else:
                 rprint(f"[red]❌ Audio speed adjustment failed, max retries reached ({max_retries})[/red]")
                 raise e
@@ -180,7 +182,7 @@ def merge_chunks(tasks_df: pd.DataFrame) -> pd.DataFrame:
             # 🔄 Step5: Check if the last row exceeds the range
             if cur_time > chunk_end_time:
                 time_diff = cur_time - chunk_end_time
-                if time_diff <= 0.6:  # If exceeding time is within 0.6 seconds, truncate the last audio
+                if time_diff <= TIME_DIFF_TOLERANCE:  # If exceeding time is within tolerance, truncate the last audio
                     rprint(f"[yellow]⚠️ Chunk {chunk_start} to {index} exceeds by {time_diff:.3f}s, truncating last audio[/yellow]")
                     # Get the last audio file
                     last_number = tasks_df.iloc[index]['number']

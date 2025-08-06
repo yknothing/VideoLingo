@@ -3,7 +3,21 @@ import os
 import re
 from rich.panel import Panel
 from rich.console import Console
-import autocorrect_py as autocorrect
+# Safe import for autocorrect_py
+try:
+    import autocorrect_py as autocorrect
+except ImportError:
+    # Create safe replacement for autocorrect functionality
+    class SafeAutocorrect:
+        @staticmethod
+        def format(text):
+            """Safe text formatting without autocorrect dependency"""
+            if not text:
+                return ""
+            # Basic text cleaning
+            return str(text).strip()
+    
+    autocorrect = SafeAutocorrect()
 from core.utils import *
 from core.utils.models import *
 console = Console()

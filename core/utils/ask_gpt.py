@@ -137,6 +137,28 @@ def _load_cache(prompt, resp_type, log_title):
 # ask gpt once
 # ------------
 
+def is_network_error(exception):
+    """
+    判断是否为网络错误，需要重试
+    """
+    error_str = str(exception).lower()
+    network_indicators = [
+        'connection', 'timeout', 'network', 'dns', 'ssl',
+        'handshake_failure', 'connection refused', 'connection reset',
+        'unreachable', 'temporary failure', 'service unavailable',
+        'bad gateway', 'gateway timeout', 'request timeout'
+    ]
+    return any(indicator in error_str for indicator in network_indicators)
+
+def get_retry_delay(attempt: int, base_delay: float = 1.0) -> float:
+    """
+    计算重试延迟时间（指数退避 + 随机抖动）
+    """
+    import random
+    delay = base_delay * (2 ** attempt)  # 指数退避
+    jitter = delay * 0.1 * random.random()  # 10%随机抖动
+    return min(delay + jitter, 60.0)  # 最大延迟60秒
+
 @except_handler("GPT request failed", retry=5)
 def ask_gpt(prompt, resp_type=None, valid_def=None, log_title="default"):
     # Prefer environment variables over config file to avoid plaintext secrets
@@ -175,31 +197,74 @@ def ask_gpt(prompt, resp_type=None, valid_def=None, log_title="default"):
 
     messages = [{"role": "user", "content": prompt}]
 
-    # Try each model in priority order
+    # Try each model in priority order with improved error handling
     last_error = None
+    max_retries = 3
+    
     for model in models_to_try:
-        try:
-            params = dict(
-                model=model,
-                messages=messages,
-                response_format=response_format,
-                timeout=300
-            )
-            resp_raw = client.chat.completions.create(**params)
-            # Success - break out of retry loop
-            break
-        except Exception as e:
-            last_error = e
-            error_str = str(e).lower()
-            if "429" in error_str or "rate_limit" in error_str or "quota" in error_str:
-                rprint(f"[yellow]Rate limit/quota exceeded for {model}, trying next model...[/yellow]")
-                if model != models_to_try[-1]:  # Not the last model
-                    continue
-            # For non-rate-limit errors or if this is the last model, re-raise
-            raise e
+        model_success = False
+        
+        # 对每个模型进行重试
+        for retry_attempt in range(max_retries):
+            try:
+                params = dict(
+                    model=model,
+                    messages=messages,
+                    response_format=response_format,
+                    timeout=300
+                )
+                resp_raw = client.chat.completions.create(**params)
+                model_success = True
+                break  # 成功，跳出重试循环
+                
+            except Exception as e:
+                last_error = e
+                error_str = str(e).lower()
+                
+                # 分类错误类型并决定重试策略
+                if "429" in error_str or "rate_limit" in error_str or "quota" in error_str:
+                    rprint(f"[yellow]Rate limit/quota exceeded for {model}, trying next model...[/yellow]")
+                    break  # 跳出重试循环，尝试下一个模型
+                    
+                elif is_network_error(e):
+                    if retry_attempt < max_retries - 1:
+                        delay = get_retry_delay(retry_attempt)
+                        rprint(f"[yellow]Network error for {model} (attempt {retry_attempt + 1}/{max_retries}): {str(e)[:100]}...[/yellow]")
+                        rprint(f"[blue]Retrying in {delay:.1f} seconds...[/blue]")
+                        import time
+                        time.sleep(delay)
+                        continue  # 继续重试当前模型
+                    else:
+                        rprint(f"[red]Network error persists for {model} after {max_retries} attempts[/red]")
+                        break  # 跳出重试循环，尝试下一个模型
+                        
+                elif "invalid_request_error" in error_str or "model_not_found" in error_str:
+                    rprint(f"[red]Model {model} not available or invalid request[/red]")
+                    break  # 立即跳到下一个模型
+                    
+                else:
+                    # 其他错误，如果不是最后一次重试，继续尝试
+                    if retry_attempt < max_retries - 1:
+                        delay = get_retry_delay(retry_attempt, 0.5)
+                        rprint(f"[yellow]Error for {model} (attempt {retry_attempt + 1}/{max_retries}): {str(e)[:100]}...[/yellow]")
+                        rprint(f"[blue]Retrying in {delay:.1f} seconds...[/blue]")
+                        import time
+                        time.sleep(delay)
+                        continue
+                    else:
+                        break  # 跳出重试循环，尝试下一个模型
+        
+        if model_success:
+            break  # 某个模型成功了，跳出模型循环
     else:
-        # All models failed
-        raise last_error or Exception("All fallback models failed")
+        # 所有模型都失败了
+        if last_error:
+            error_summary = f"All models failed. Last error: {str(last_error)[:200]}"
+            if is_network_error(last_error):
+                error_summary += "\n[Suggestion] Check your internet connection and API endpoints"
+            raise Exception(error_summary)
+        else:
+            raise Exception("All fallback models failed with unknown errors")
 
     # process and return full result
     resp_content = resp_raw.choices[0].message.content

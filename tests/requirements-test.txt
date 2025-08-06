@@ -17,10 +17,10 @@ pytest-json-report>=1.5.0
 responses>=0.23.3
 factory-boy>=3.3.0
 freezegun>=1.2.2  # for time-based testing
-vcr.py>=5.1.0  # for HTTP request recording
+vcrpy==5.0.0  # for HTTP request recording (package name is vcrpy)
 
 # Streamlit testing
-streamlit-testing>=0.1.0  # if available, otherwise manual mocking
+# streamlit-testing>=0.1.0  # Removed: package not available on PyPI; use existing mocks/helpers instead
 
 # Data validation testing
 hypothesis>=6.87.0  # property-based testing

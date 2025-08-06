@@ -87,7 +87,7 @@ def handle_download_tab():
             "2160p (4K)": "2160",
             "Best Quality": "best"
         }
-        target_res = load_key("ytb_resolution")
+        target_res = load_key("youtube_resolution")
         res_options = list(res_dict.keys())
         
         default_idx = 0

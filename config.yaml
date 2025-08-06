@@ -17,9 +17,9 @@ api:
   model: 'google/gemini-2.5-flash-preview-05-20'
   llm_support_json: true
   model_priority:
-    - 'google/gemini-2.5-flash-preview-05-20'
-    - 'qwen/qwq-32b'
-    - 'google/gemini-2.5-flash-lite-preview-06-17'
+  - 'google/gemini-2.5-flash-preview-05-20'
+  - 'qwen/qwq-32b'
+  - 'google/gemini-2.5-flash-lite-preview-06-17'
 
 # ------------
 # OpenRouter configuration example (uncomment to use)
@@ -65,11 +65,11 @@ youtube:
   proxy: ''  # Set YOUTUBE_PROXY environment variable
 
 # *Default resolution for downloading YouTube videos [360, 1080, best]
-ytb_resolution: '1080'
+youtube_resolution: '1080'
 
 # *Video storage and processing directories
 video_storage:
-  base_path: ''  # Set VIDEO_STORAGE_BASE_PATH environment variable
+  base_path: '/Volumes/ssd_2/video/transcribe'  # Set VIDEO_STORAGE_BASE_PATH environment variable
   input_dir: 'input'      # Downloaded videos
   temp_dir: 'temp'        # Audio, subtitles, intermediate files  
   output_dir: 'output'    # Final exported results
@@ -94,7 +94,7 @@ pause_before_translate: false
 
 ## ======================== Dubbing Settings ======================== ##
 # TTS selection [sf_fish_tts, openai_tts, gpt_sovits, azure_tts, fish_tts, edge_tts, custom_tts]
-tts_method: 'azure_tts'
+tts_method: 'openai_tts'
 
 # SiliconFlow FishTTS
 sf_fish_tts:

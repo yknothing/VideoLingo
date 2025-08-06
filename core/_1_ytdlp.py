@@ -1,7 +1,9 @@
-import os, sys
 import glob
+import os
 import re
 import subprocess
+import sys
+
 from core.utils import *
 from core.utils.security_utils import (
     sanitize_filename,
@@ -350,12 +352,22 @@ def download_video_ytdlp(url, save_path=None, resolution=None, progress_callback
         paths = get_storage_paths()
         save_path = paths["input"]
     if resolution is None:
-        resolution = load_key("ytb_resolution")
+        resolution = load_key("youtube_resolution")
 
     # Debug resolution parameter (can be removed in production)
     print(
         f"[DEBUG] download_video_ytdlp called with resolution: '{resolution}' (type: {type(resolution)})"
     )
+
+    # 资源监控：检查磁盘空间
+    try:
+        import shutil
+        free_bytes = shutil.disk_usage(save_path).free
+        free_gb = free_bytes / (1024 * 1024 * 1024)
+        if free_gb < 1.0:  # 少于1GB可用空间时警告
+            rprint(f"[yellow]Warning: Low disk space ({free_gb:.1f}GB available). Download may fail.[/yellow]")
+    except Exception as e:
+        rprint(f"[yellow]Could not check disk space: {e}[/yellow]")
 
     # Ensure all storage directories exist
     ensure_storage_dirs()
@@ -438,18 +450,32 @@ def download_via_python_api(
                     progress = downloaded / total
                     speed = d.get("speed", 0) or 0
                     eta = d.get("eta", 0) or 0
-                    progress_callback(
-                        {
-                            "progress": progress,
-                            "downloaded": downloaded,
-                            "total": total,
-                            "speed": speed,
-                            "eta": eta,
-                            "status": "downloading",
-                        }
-                    )
+                    
+                    # 资源监控：检查下载速度和剩余时间
+                    speed_mbps = (speed / (1024 * 1024)) if speed else 0
+                    downloaded_mb = downloaded / (1024 * 1024)
+                    total_mb = total / (1024 * 1024)
+                    
+                    progress_data = {
+                        "progress": progress,
+                        "downloaded": downloaded,
+                        "total": total,
+                        "speed": speed,
+                        "eta": eta,
+                        "status": "downloading",
+                        "downloaded_mb": downloaded_mb,
+                        "total_mb": total_mb,
+                        "speed_mbps": speed_mbps
+                    }
+                    
+                    # 低速警告
+                    if speed_mbps > 0 and speed_mbps < 0.1:  # 小于0.1MB/s
+                        progress_data["warning"] = f"Slow download speed: {speed_mbps:.2f}MB/s"
+                    
+                    progress_callback(progress_data)
             except Exception as e:
-                pass  # Ignore progress callback errors
+                # 记录但不阻止下载
+                pass
         elif progress_callback and d["status"] == "finished":
             progress_callback({"progress": 1.0, "status": "finished"})
             downloaded_holder["path"] = d.get("filename")

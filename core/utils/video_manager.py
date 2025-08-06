@@ -29,6 +29,52 @@ class VideoFileManager:
         """确保目录结构存在"""
         for path in self.paths.values():
             os.makedirs(path, exist_ok=True)
+    
+    def check_disk_space(self, required_mb: int = 1000, path: str = None) -> Dict[str, any]:
+        """
+        检查磁盘空间是否足够
+        Args:
+            required_mb: 需要的最小空间(MB)
+            path: 检查的路径，默认检查output目录
+        Returns:
+            Dict with 'available': bool, 'free_mb': int, 'required_mb': int, 'path': str
+        """
+        check_path = path or self.paths.get('output', '.')
+        
+        try:
+            import shutil
+            free_bytes = shutil.disk_usage(check_path).free
+            free_mb = free_bytes / (1024 * 1024)
+            
+            return {
+                'available': free_mb >= required_mb,
+                'free_mb': int(free_mb),
+                'required_mb': required_mb,
+                'path': check_path
+            }
+        except Exception as e:
+            # 如果检查失败，返回警告但不阻止操作
+            return {
+                'available': True,
+                'free_mb': -1,
+                'required_mb': required_mb,
+                'path': check_path,
+                'error': str(e)
+            }
+    
+    def estimate_required_space(self, video_path: str) -> int:
+        """
+        估算视频处理所需的磁盘空间(MB)
+        返回保守估计值：原文件大小的3倍
+        """
+        try:
+            if os.path.exists(video_path):
+                file_size_mb = os.path.getsize(video_path) / (1024 * 1024)
+                # 保守估计：临时文件 + 输出文件需要原文件3倍空间
+                return int(file_size_mb * 3)
+            return 1000  # 默认需要1GB空间
+        except Exception:
+            return 1000
             
     def generate_video_id(self, video_path: str) -> str:
         """
@@ -64,20 +110,39 @@ class VideoFileManager:
         注册新视频到系统中
         返回视频ID
         """
+        # 检查磁盘空间
+        required_space = self.estimate_required_space(video_path)
+        space_check = self.check_disk_space(required_space)
+        
+        if not space_check['available']:
+            from rich import print as rprint
+            rprint(f"[red]Warning: Insufficient disk space. Available: {space_check['free_mb']}MB, Required: {space_check['required_mb']}MB[/red]")
+            rprint(f"[yellow]Processing may fail due to low disk space. Consider freeing up space in {space_check['path']}[/yellow]")
+        
         if video_id is None:
             video_id = self.generate_video_id(video_path)
         
-        # 确保input目录中有正确的文件
+        # ------------
+        # 保持原始文件名，不使用hash重命名
+        # ------------
         input_dir = self.paths['input']
-        ext = os.path.splitext(video_path)[1]
-        target_input_path = os.path.join(input_dir, f"{video_id}{ext}")
+        original_filename = os.path.basename(video_path)
+        
+        # 清理文件名以确保跨平台兼容性，但保持可读性
+        from core.utils.security_utils import sanitize_filename
+        safe_filename = sanitize_filename(original_filename)
+        
+        target_input_path = os.path.join(input_dir, safe_filename)
         
         # 智能文件管理：避免不必要的复制
         if os.path.abspath(video_path) != os.path.abspath(target_input_path):
             # 检查是否已经在input目录中
             if os.path.dirname(os.path.abspath(video_path)) == os.path.abspath(input_dir):
-                # 文件已在input目录，直接重命名
-                os.rename(video_path, target_input_path)
+                # 文件已在input目录，如果文件名需要清理则重命名
+                if os.path.basename(video_path) != safe_filename:
+                    os.rename(video_path, target_input_path)
+                else:
+                    target_input_path = video_path  # 文件名已经安全，不需要重命名
             else:
                 # 文件在其他目录，移动到input目录（避免复制）
                 shutil.move(video_path, target_input_path)
@@ -89,11 +154,12 @@ class VideoFileManager:
         # 创建视频元数据
         self._save_video_metadata(video_id, {
             'original_path': video_path,
-            'original_filename': os.path.basename(video_path),
+            'original_filename': original_filename,
+            'safe_filename': safe_filename,
             'registered_time': time.time(),
             'input_path': target_input_path,
             'temp_dir': temp_dir,
-            'file_extension': ext,
+            'file_extension': os.path.splitext(original_filename)[1],
             'moved_from': video_path if video_path != target_input_path else None
         })
         
@@ -184,31 +250,68 @@ class VideoFileManager:
     
     def get_current_video_id(self) -> Optional[str]:
         """
-        获取当前正在处理的视频ID（从input目录推断）
+        获取当前正在处理的视频ID（通过元数据文件查找）
         """
         input_dir = self.paths['input']
-        if not os.path.exists(input_dir):
+        temp_dir = self.paths['temp']
+        
+        if not os.path.exists(input_dir) or not os.path.exists(temp_dir):
             return None
         
-        # 查找input目录中的视频文件
+        # ------------
+        # 通过temp目录中的元数据文件查找video_id
+        # ------------
+        latest_video_id = None
+        latest_time = 0
+        
+        # 遍历temp目录中的所有video_id目录
+        for item in os.listdir(temp_dir):
+            item_path = os.path.join(temp_dir, item)
+            if os.path.isdir(item_path):
+                metadata_file = os.path.join(item_path, '.metadata.json')
+                if os.path.exists(metadata_file):
+                    try:
+                        metadata = self._load_video_metadata(item)
+                        if metadata and 'input_path' in metadata:
+                            # 检查对应的input文件是否存在
+                            if os.path.exists(metadata['input_path']):
+                                registered_time = metadata.get('registered_time', 0)
+                                if registered_time > latest_time:
+                                    latest_time = registered_time
+                                    latest_video_id = item
+                    except Exception:
+                        continue
+        
+        # 如果找到了有效的video_id，返回它
+        if latest_video_id:
+            return latest_video_id
+        
+        # ------------
+        # 降级方案：如果没有元数据，尝试从文件名推断
+        # ------------
+        from core.utils.config_utils import load_key
+        try:
+            allowed_formats = load_key("allowed_video_formats")
+            # 确保格式以点开头
+            allowed_extensions = [f'.{fmt}' if not fmt.startswith('.') else fmt for fmt in allowed_formats]
+        except Exception:
+            # 降级到默认格式
+            allowed_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']
+        
         video_files = []
         for filename in os.listdir(input_dir):
-            if any(filename.lower().endswith(ext) for ext in ['.mp4', '.avi', '.mov', '.mkv', '.webm']):
+            if any(filename.lower().endswith(ext) for ext in allowed_extensions):
                 video_files.append(filename)
         
         if not video_files:
             return None
         
-        # 如果只有一个视频文件，提取其ID
-        if len(video_files) == 1:
-            filename = video_files[0]
-            # 假设文件名格式为 video_id.ext
-            video_id = os.path.splitext(filename)[0]
-            return video_id
-        
-        # 多个文件时返回最新的
+        # 返回最新的视频文件，生成临时ID
         newest_file = max(video_files, key=lambda f: os.path.getmtime(os.path.join(input_dir, f)))
-        return os.path.splitext(newest_file)[0]
+        newest_path = os.path.join(input_dir, newest_file)
+        
+        # 为这个文件生成并注册video_id
+        return self.register_video(newest_path)
     
     def _save_video_metadata(self, video_id: str, metadata: Dict):
         """保存视频元数据"""

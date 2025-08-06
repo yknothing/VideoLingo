@@ -12,6 +12,7 @@ import unicodedata
 def sanitize_filename(filename, max_length=200):
     """
     Sanitize filename to prevent directory traversal and ensure cross-platform compatibility
+    保持文件名的可读性，只移除真正危险的字符
     
     Args:
         filename: Original filename
@@ -23,20 +24,28 @@ def sanitize_filename(filename, max_length=200):
     if not filename:
         return str(uuid.uuid4())
     
-    # Remove or replace dangerous characters
-    # Keep only alphanumeric, dots, hyphens, underscores
-    sanitized = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '', filename)
+    # ------------
+    # 保持可读性的文件名清理策略
+    # ------------
     
-    # Remove directory traversal attempts
+    # 只移除真正危险的字符，保留更多可读字符
+    # 允许：字母、数字、空格、点、连字符、下划线、括号、中文等
+    dangerous_chars = r'[<>:"/\\|?*\x00-\x1f]'
+    sanitized = re.sub(dangerous_chars, '', filename)
+    
+    # 将多个空格替换为单个空格
+    sanitized = re.sub(r'\s+', ' ', sanitized)
+    
+    # 移除目录遍历尝试
     sanitized = sanitized.replace('..', '')
     
-    # Normalize unicode characters
+    # Unicode标准化
     sanitized = unicodedata.normalize('NFKD', sanitized)
     
-    # Remove leading/trailing dots and spaces (Windows issues)
+    # 移除首尾的点和空格（Windows兼容性）
     sanitized = sanitized.strip('. ')
     
-    # Ensure we don't create reserved names (Windows)
+    # 检查Windows保留名称
     reserved_names = {
         'CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5',
         'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4',
@@ -45,16 +54,24 @@ def sanitize_filename(filename, max_length=200):
     
     name_without_ext = os.path.splitext(sanitized)[0].upper()
     if name_without_ext in reserved_names:
-        sanitized = f"file_{sanitized}"
+        sanitized = f"video_{sanitized}"
     
-    # Truncate if too long
+    # 长度截断，优先保留文件扩展名
     if len(sanitized) > max_length:
         name, ext = os.path.splitext(sanitized)
-        sanitized = name[:max_length-len(ext)] + ext
+        available_length = max_length - len(ext)
+        if available_length > 0:
+            sanitized = name[:available_length] + ext
+        else:
+            # 如果扩展名太长，截断整个文件名
+            sanitized = sanitized[:max_length]
     
-    # Fallback to UUID if sanitization resulted in empty string
+    # 如果清理后为空，使用原始文件名的安全版本
     if not sanitized:
-        sanitized = str(uuid.uuid4())
+        # 提取文件扩展名
+        _, ext = os.path.splitext(filename)
+        safe_ext = re.sub(dangerous_chars, '', ext)
+        sanitized = f"video_{str(uuid.uuid4())[:8]}{safe_ext}"
     
     return sanitized
 

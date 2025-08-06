@@ -14,7 +14,7 @@ INPUT_DIR = 'batch/input'
 OUTPUT_DIR = 'output'
 SAVE_DIR = 'batch/output'
 ERROR_OUTPUT_DIR = 'batch/output/ERROR'
-YTB_RESOLUTION_KEY = "ytb_resolution"
+YOUTUBE_RESOLUTION_KEY = "youtube_resolution"
 
 def process_video(file, dubbing=False, is_retry=False):
     if not is_retry:
@@ -78,7 +78,7 @@ def prepare_output_folder(output_folder):
 
 def process_input_file(file):
     if file.startswith('http'):
-        _1_ytdlp.download_video_ytdlp(file, resolution=load_key(YTB_RESOLUTION_KEY))
+        _1_ytdlp.download_video_ytdlp(file, resolution=load_key(YOUTUBE_RESOLUTION_KEY))
         video_file = _1_ytdlp.find_video_files()
     else:
         input_file = os.path.join('batch', 'input', file)
