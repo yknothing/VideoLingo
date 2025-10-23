@@ -93,9 +93,11 @@ Meet any problem? Chat with our free online AI agent [**here**](https://share.fa
 1. Clone the repository
 
 ```bash
-git clone https://github.com/Huanshere/VideoLingo.git
+git clone https://github.com/yknothing/VideoLingo.git
 cd VideoLingo
 ```
+
+> **Note:** This is the `yknothing/VideoLingo` fork. The original repository is at `Huanshere/VideoLingo`.
 
 2. Install dependencies(requires `python=3.10`)
 
@@ -147,9 +149,16 @@ This project is licensed under the Apache 2.0 License. Special thanks to the fol
 
 [whisperX](https://github.com/m-bain/whisperX), [yt-dlp](https://github.com/yt-dlp/yt-dlp), [json_repair](https://github.com/mangiucugna/json_repair), [BELLE](https://github.com/LianjiaTech/BELLE)
 
-## 📬 Contact Me
+## 🤝 Contributing
 
-- Submit [Issues](https://github.com/Huanshere/VideoLingo/issues) or [Pull Requests](https://github.com/Huanshere/VideoLingo/pulls) on GitHub
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on how to submit pull requests, report issues, and contribute to the project.
+
+**Important**: All Pull Requests should target the `yknothing/VideoLingo` repository, not the upstream repository.
+
+## 📬 Contact
+
+- Submit [Issues](https://github.com/yknothing/VideoLingo/issues) or [Pull Requests](https://github.com/yknothing/VideoLingo/pulls) on GitHub
+- Original project: [Huanshere/VideoLingo](https://github.com/Huanshere/VideoLingo)
 - DM me on Twitter: [@Huanshere](https://twitter.com/Huanshere)
 - Email me at: team@videolingo.io
 

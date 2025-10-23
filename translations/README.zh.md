@@ -95,9 +95,11 @@ https://github.com/user-attachments/assets/47d965b2-b4ab-4a0b-9d08-b49a7bf3508c
 1. 克隆仓库
 
 ```bash
-git clone https://github.com/Huanshere/VideoLingo.git
+git clone https://github.com/yknothing/VideoLingo.git
 cd VideoLingo
 ```
+
+> **注意:** 这是 `yknothing/VideoLingo` 分支。原始仓库位于 `Huanshere/VideoLingo`。
 
 2. 安装依赖（需要 `python=3.10`）
 
@@ -148,10 +150,17 @@ docker run -d -p 8501:8501 --gpus all videolingo
 
 [whisperX](https://github.com/m-bain/whisperX), [yt-dlp](https://github.com/yt-dlp/yt-dlp), [json_repair](https://github.com/mangiucugna/json_repair), [BELLE](https://github.com/LianjiaTech/BELLE)
 
+## 🤝 贡献指南
+
+欢迎贡献！请阅读我们的[贡献指南](../CONTRIBUTING.md)了解如何提交 Pull Request、报告问题和为项目做出贡献的详细信息。
+
+**重要提示**: 所有 Pull Request 应该提交到 `yknothing/VideoLingo` 仓库，而不是上游仓库。
+
 ## 📬 联系
 
 - 加入 QQ 群寻求解答：875297969
-- 在 GitHub 上提交 [Issues](https://github.com/Huanshere/VideoLingo/issues) 或 [Pull Requests](https://github.com/Huanshere/VideoLingo/pulls)
+- 在 GitHub 上提交 [Issues](https://github.com/yknothing/VideoLingo/issues) 或 [Pull Requests](https://github.com/yknothing/VideoLingo/pulls)
+- 原始项目：[Huanshere/VideoLingo](https://github.com/Huanshere/VideoLingo)
 - 关注我的 Twitter：[@Huanshere](https://twitter.com/Huanshere)
 - 联系邮箱：team@videolingo.io
 
