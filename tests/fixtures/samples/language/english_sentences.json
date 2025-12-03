@@ -1,0 +1,98 @@
+{
+  "language": "en",
+  "language_name": "English",
+  "sample_sentences": [
+    {
+      "id": "en_001",
+      "text": "Hello, welcome to our educational video series.",
+      "complexity": "simple",
+      "word_count": 8,
+      "duration_estimate": 2.5,
+      "tags": ["greeting", "introduction"]
+    },
+    {
+      "id": "en_002", 
+      "text": "Machine learning algorithms can process vast amounts of data to identify patterns and make predictions.",
+      "complexity": "complex",
+      "word_count": 16,
+      "duration_estimate": 5.2,
+      "tags": ["technical", "AI", "explanation"]
+    },
+    {
+      "id": "en_003",
+      "text": "The quick brown fox jumps over the lazy dog.",
+      "complexity": "simple",
+      "word_count": 9,
+      "duration_estimate": 2.8,
+      "tags": ["pangram", "test"]
+    },
+    {
+      "id": "en_004",
+      "text": "Artificial intelligence is revolutionizing industries such as healthcare, finance, transportation, and manufacturing through automated decision-making and predictive analytics.",
+      "complexity": "complex",
+      "word_count": 22,
+      "duration_estimate": 7.5,
+      "tags": ["technical", "AI", "industries"]
+    },
+    {
+      "id": "en_005",
+      "text": "Thank you for watching this tutorial.",
+      "complexity": "simple", 
+      "word_count": 7,
+      "duration_estimate": 2.2,
+      "tags": ["closing", "gratitude"]
+    }
+  ],
+  "translation_pairs": [
+    {
+      "source": "Hello, world\!",
+      "targets": {
+        "zh": "你好，世界！",
+        "es": "¡Hola, mundo\!",
+        "fr": "Bonjour, le monde\!",
+        "de": "Hallo, Welt\!"
+      }
+    },
+    {
+      "source": "How are you today?",
+      "targets": {
+        "zh": "你今天好吗？",
+        "es": "¿Cómo estás hoy?",
+        "fr": "Comment allez-vous aujourd'hui?",
+        "de": "Wie geht es dir heute?"
+      }
+    },
+    {
+      "source": "Machine learning is transforming our world.",
+      "targets": {
+        "zh": "机器学习正在改变我们的世界。",
+        "es": "El aprendizaje automático está transformando nuestro mundo.",
+        "fr": "L'apprentissage automatique transforme notre monde.",
+        "de": "Maschinelles Lernen verändert unsere Welt."
+      }
+    }
+  ],
+  "terminology": {
+    "ai_ml": {
+      "artificial intelligence": "人工智能",
+      "machine learning": "机器学习", 
+      "neural network": "神经网络",
+      "deep learning": "深度学习",
+      "algorithm": "算法",
+      "data processing": "数据处理",
+      "pattern recognition": "模式识别",
+      "predictive analytics": "预测分析"
+    },
+    "video_processing": {
+      "transcription": "转录",
+      "translation": "翻译", 
+      "subtitles": "字幕",
+      "dubbing": "配音",
+      "voice synthesis": "语音合成",
+      "audio processing": "音频处理",
+      "video encoding": "视频编码",
+      "format conversion": "格式转换"
+    }
+  }
+}
+EOF < /dev/null

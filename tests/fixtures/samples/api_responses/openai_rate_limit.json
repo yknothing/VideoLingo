@@ -1,0 +1,9 @@
+{
+  "error": {
+    "message": "Rate limit reached for gpt-3.5-turbo in organization org-abcdef123456 on requests per min. Limit: 60 / min. Please try again in 60s.",
+    "type": "rate_limit_error",
+    "param": null,
+    "code": "rate_limit_exceeded"
+  }
+}
+EOF < /dev/null

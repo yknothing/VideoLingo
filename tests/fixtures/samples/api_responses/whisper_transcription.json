@@ -1,0 +1,187 @@
+{
+  "text": "Hello, welcome to this educational video about artificial intelligence and machine learning. Today we will explore the fascinating world of neural networks and deep learning algorithms.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 3.5,
+      "text": "Hello, welcome to this educational video",
+      "words": [
+        {
+          "word": "Hello,",
+          "start": 0.0,
+          "end": 0.6,
+          "confidence": 0.99
+        },
+        {
+          "word": "welcome",
+          "start": 0.7,
+          "end": 1.2,
+          "confidence": 0.98
+        },
+        {
+          "word": "to",
+          "start": 1.3,
+          "end": 1.4,
+          "confidence": 0.99
+        },
+        {
+          "word": "this",
+          "start": 1.5,
+          "end": 1.8,
+          "confidence": 0.97
+        },
+        {
+          "word": "educational",
+          "start": 1.9,
+          "end": 2.7,
+          "confidence": 0.95
+        },
+        {
+          "word": "video",
+          "start": 2.8,
+          "end": 3.5,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "start": 3.6,
+      "end": 8.2,
+      "text": "about artificial intelligence and machine learning.",
+      "words": [
+        {
+          "word": "about",
+          "start": 3.6,
+          "end": 3.9,
+          "confidence": 0.98
+        },
+        {
+          "word": "artificial",
+          "start": 4.0,
+          "end": 4.8,
+          "confidence": 0.96
+        },
+        {
+          "word": "intelligence",
+          "start": 4.9,
+          "end": 5.8,
+          "confidence": 0.94
+        },
+        {
+          "word": "and",
+          "start": 5.9,
+          "end": 6.0,
+          "confidence": 0.99
+        },
+        {
+          "word": "machine",
+          "start": 6.1,
+          "end": 6.7,
+          "confidence": 0.97
+        },
+        {
+          "word": "learning.",
+          "start": 6.8,
+          "end": 8.2,
+          "confidence": 0.96
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "start": 8.5,
+      "end": 14.8,
+      "text": "Today we will explore the fascinating world of neural networks and deep learning algorithms.",
+      "words": [
+        {
+          "word": "Today",
+          "start": 8.5,
+          "end": 9.0,
+          "confidence": 0.98
+        },
+        {
+          "word": "we",
+          "start": 9.1,
+          "end": 9.3,
+          "confidence": 0.99
+        },
+        {
+          "word": "will",
+          "start": 9.4,
+          "end": 9.7,
+          "confidence": 0.98
+        },
+        {
+          "word": "explore",
+          "start": 9.8,
+          "end": 10.5,
+          "confidence": 0.95
+        },
+        {
+          "word": "the",
+          "start": 10.6,
+          "end": 10.8,
+          "confidence": 0.99
+        },
+        {
+          "word": "fascinating",
+          "start": 10.9,
+          "end": 11.8,
+          "confidence": 0.92
+        },
+        {
+          "word": "world",
+          "start": 11.9,
+          "end": 12.3,
+          "confidence": 0.97
+        },
+        {
+          "word": "of",
+          "start": 12.4,
+          "end": 12.5,
+          "confidence": 0.99
+        },
+        {
+          "word": "neural",
+          "start": 12.6,
+          "end": 13.1,
+          "confidence": 0.94
+        },
+        {
+          "word": "networks",
+          "start": 13.2,
+          "end": 13.8,
+          "confidence": 0.95
+        },
+        {
+          "word": "and",
+          "start": 13.9,
+          "end": 14.0,
+          "confidence": 0.99
+        },
+        {
+          "word": "deep",
+          "start": 14.1,
+          "end": 14.3,
+          "confidence": 0.96
+        },
+        {
+          "word": "learning",
+          "start": 14.4,
+          "end": 14.6,
+          "confidence": 0.97
+        },
+        {
+          "word": "algorithms.",
+          "start": 14.7,
+          "end": 14.8,
+          "confidence": 0.93
+        }
+      ]
+    }
+  ],
+  "language": "en"
+}
+EOF < /dev/null

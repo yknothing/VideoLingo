@@ -1,0 +1,98 @@
+# Full Featured Configuration with All Options
+api:
+  key: "sk-full-featured-key"
+  base_url: "https://api.openai.com/v1"
+  model: "gpt-4-turbo"
+  llm_support_json: true
+
+# TTS Configurations
+openai_tts:
+  api_key: "sk-openai-tts-key"
+  voice: "alloy"
+  model: "tts-1-hd"
+
+azure_tts:
+  api_key: "azure-tts-key"
+  region: "westus2"
+  voice: "en-US-AriaNeural"
+
+sf_fish_tts:
+  api_key: "fish-api-key"
+  model: "fish-speech-1"
+
+sf_cosyvoice2:
+  api_key: "cosyvoice-api-key"
+
+f5tts:
+  302_api: "f5tts-302-api-key"
+
+# Whisper Configurations
+whisper:
+  model: "large-v3"
+  language: "auto"
+  runtime: "local"
+  whisperX_302_api_key: "whisperx-302-key"
+  elevenlabs_api_key: "elevenlabs-key"
+
+# YouTube Settings
+youtube:
+  cookies_path: "/path/to/cookies.txt"
+  proxy: "http://proxy.example.com:8080"
+
+# Processing Settings
+max_workers: 4
+target_language: "简体中文"
+display_language: "zh-CN"
+youtube_resolution: "1080"
+demucs: true
+burn_subtitles: true
+ffmpeg_gpu: true
+
+tts_method: "openai_tts"
+model_dir: "/custom/model/cache"
+
+# Subtitle Settings
+subtitle:
+  max_length: 85
+  target_multiplier: 1.4
+
+# Translation Settings
+summary_length: 12000
+max_split_length: 30
+reflect_translate: true
+pause_before_translate: true
+batch_translate_size: 25
+
+# Audio Settings
+speed_factor:
+  min: 0.7
+  accept: 1.0
+  max: 1.5
+
+min_subtitle_duration: 2.0
+min_trim_duration: 2.5
+tolerance: 2.5
+
+# Storage Settings
+video_storage:
+  base_path: "/custom/videolingo/data"
+  input_dir: "source_videos"
+  temp_dir: "work_in_progress"
+  output_dir: "completed_videos"
+
+# Language Settings
+language_split_with_space:
+  - "en"
+  - "es"
+  - "fr"
+  - "de"
+  - "it"
+  - "pt"
+  - "ru"
+
+language_split_without_space:
+  - "zh"
+  - "ja"
+  - "ko"
+  - "th"
+EOF < /dev/null

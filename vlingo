@@ -1,415 +1,53 @@
 #!/usr/bin/env python3
 """
-VideoLingo 全局命令行管理工具
-用于管理VideoLingo应用程序的生命周期
+VideoLingo 全局命令行工具 - 根目录包装脚本
+重定向到 scripts/vlingo 以保持文档一致性
 """
 
 import os
 import sys
 import subprocess
-import signal
-import time
-import argparse
-import json
-import logging
-from pathlib import Path
-from datetime import datetime
-import psutil
-
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger(__name__)
-
-class VideoLingoManager:
-    """VideoLingo 应用管理器"""
-    
-    def __init__(self):
-        self.app_name = "VideoLingo"
-        self.script_dir = Path(__file__).parent
-        self.config_file = self.script_dir / "config.yaml"
-        self.pid_file = self.script_dir / ".vlingo.pid"
-        self.log_file = self.script_dir / "vlingo.log"
-        self.port = 8501
-        
-    def is_running(self):
-        """检查应用是否正在运行"""
-        if not self.pid_file.exists():
-            return False, None
-            
-        try:
-            with open(self.pid_file, 'r') as f:
-                pid = int(f.read().strip())
-            
-            if psutil.pid_exists(pid):
-                proc = psutil.Process(pid)
-                if 'streamlit' in ' '.join(proc.cmdline()).lower():
-                    return True, pid
-            
-            # PID文件存在但进程不存在，清理文件
-            self.pid_file.unlink()
-            return False, None
-            
-        except (ValueError, psutil.NoSuchProcess, PermissionError):
-            return False, None
-    
-    def start(self, background=True, dev_mode=False):
-        """启动VideoLingo应用"""
-        running, pid = self.is_running()
-        if running:
-            logger.info(f"📍 {self.app_name} 已在运行 (PID: {pid})")
-            logger.info(f"🌐 访问地址: http://localhost:{self.port}")
-            return True
-        
-        # 检查配置文件
-        if not self.config_file.exists():
-            logger.error(f"❌ 配置文件不存在: {self.config_file}")
-            logger.info("💡 请先运行: vlingo setup")
-            return False
-        
-        # 检查依赖
-        if not self._check_dependencies():
-            logger.error("❌ 依赖检查失败")
-            return False
-        
-        logger.info(f"🚀 启动 {self.app_name}...")
-        
-        try:
-            # 构建启动命令
-            cmd = [
-                sys.executable, "-m", "streamlit", "run", "st.py",
-                "--server.port", str(self.port),
-                "--server.address", "localhost",
-                "--browser.gatherUsageStats", "false"
-            ]
-            
-            if dev_mode:
-                cmd.extend(["--server.runOnSave", "true"])
-            
-            # 启动进程
-            if background:
-                with open(self.log_file, 'w') as log_f:
-                    process = subprocess.Popen(
-                        cmd,
-                        cwd=self.script_dir,
-                        stdout=log_f,
-                        stderr=subprocess.STDOUT,
-                        preexec_fn=os.setsid if os.name != 'nt' else None
-                    )
-                
-                # 保存PID
-                with open(self.pid_file, 'w') as f:
-                    f.write(str(process.pid))
-                
-                # 等待启动
-                time.sleep(3)
-                
-                # 验证启动成功
-                if self._check_port():
-                    logger.info(f"✅ {self.app_name} 启动成功!")
-                    logger.info(f"📊 进程ID: {process.pid}")
-                    logger.info(f"🌐 访问地址: http://localhost:{self.port}")
-                    logger.info(f"📝 日志文件: {self.log_file}")
-                    return True
-                else:
-                    logger.error("❌ 启动失败，端口检查不通过")
-                    return False
-            else:
-                # 前台运行
-                logger.info(f"🌐 访问地址: http://localhost:{self.port}")
-                logger.info("⌨️  按 Ctrl+C 停止服务")
-                subprocess.run(cmd, cwd=self.script_dir)
-                return True
-                
-        except Exception as e:
-            logger.error(f"❌ 启动失败: {e}")
-            return False
-    
-    def stop(self):
-        """停止VideoLingo应用"""
-        running, pid = self.is_running()
-        if not running:
-            logger.info(f"ℹ️  {self.app_name} 未在运行")
-            return True
-        
-        logger.info(f"🛑 停止 {self.app_name} (PID: {pid})...")
-        
-        try:
-            # 发送终止信号
-            if os.name == 'nt':  # Windows
-                subprocess.run(['taskkill', '/F', '/T', '/PID', str(pid)], 
-                             capture_output=True)
-            else:  # Unix/Linux/macOS
-                os.killpg(os.getpgid(pid), signal.SIGTERM)
-            
-            # 等待进程结束
-            for _ in range(10):
-                if not psutil.pid_exists(pid):
-                    break
-                time.sleep(0.5)
-            
-            # 强制终止
-            if psutil.pid_exists(pid):
-                if os.name == 'nt':
-                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(pid)])
-                else:
-                    os.killpg(os.getpgid(pid), signal.SIGKILL)
-            
-            # 清理PID文件
-            if self.pid_file.exists():
-                self.pid_file.unlink()
-            
-            logger.info(f"✅ {self.app_name} 已停止")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ 停止失败: {e}")
-            return False
-    
-    def restart(self, background=True, dev_mode=False):
-        """重启VideoLingo应用"""
-        logger.info(f"🔄 重启 {self.app_name}...")
-        self.stop()
-        time.sleep(2)
-        return self.start(background, dev_mode)
-    
-    def status(self):
-        """显示应用状态"""
-        running, pid = self.is_running()
-        
-        print(f"\n{'='*50}")
-        print(f"📊 {self.app_name} 状态报告")
-        print(f"{'='*50}")
-        
-        if running:
-            proc = psutil.Process(pid)
-            print(f"🟢 状态: 运行中")
-            print(f"📊 进程ID: {pid}")
-            print(f"🌐 端口: {self.port}")
-            print(f"💾 内存使用: {proc.memory_info().rss / 1024 / 1024:.1f} MB")
-            print(f"⏰ 运行时间: {datetime.now() - datetime.fromtimestamp(proc.create_time())}")
-            print(f"🌐 访问地址: http://localhost:{self.port}")
-        else:
-            print(f"🔴 状态: 未运行")
-        
-        print(f"📁 工作目录: {self.script_dir}")
-        print(f"⚙️  配置文件: {self.config_file}")
-        print(f"📝 日志文件: {self.log_file}")
-        print(f"{'='*50}\n")
-    
-    def logs(self, lines=50, follow=False):
-        """显示应用日志"""
-        if not self.log_file.exists():
-            logger.info("📝 日志文件不存在")
-            return
-        
-        try:
-            if follow:
-                logger.info("📝 实时日志 (按 Ctrl+C 退出):")
-                subprocess.run(['tail', '-f', str(self.log_file)])
-            else:
-                logger.info(f"📝 最近 {lines} 行日志:")
-                with open(self.log_file, 'r', encoding='utf-8') as f:
-                    log_lines = f.readlines()
-                    for line in log_lines[-lines:]:
-                        print(line.rstrip())
-        except Exception as e:
-            logger.error(f"❌ 读取日志失败: {e}")
-    
-    def setup(self):
-        """设置向导"""
-        print(f"\n🛠️  {self.app_name} 设置向导")
-        print("="*50)
-        
-        # 检查配置文件
-        if self.config_file.exists():
-            print(f"✅ 配置文件已存在: {self.config_file}")
-            response = input("是否重新配置? (y/N): ").lower()
-            if response != 'y':
-                return
-        
-        # API配置
-        print("\n📋 API 配置")
-        print("推荐使用 OpenRouter (支持多种模型)")
-        
-        api_key = input("请输入 API Key (OpenRouter: sk-or-v1-xxx): ").strip()
-        if not api_key:
-            logger.error("❌ API Key 不能为空")
-            return False
-        
-        api_base = input("API Base URL [https://openrouter.ai/api/v1]: ").strip()
-        if not api_base:
-            api_base = "https://openrouter.ai/api/v1"
-        
-        model = input("模型名称 [anthropic/claude-3.5-sonnet]: ").strip()
-        if not model:
-            model = "anthropic/claude-3.5-sonnet"
-        
-        # 创建配置
-        config_content = f"""# VideoLingo 配置文件
-# 自动生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-# API配置
-api:
-  key: '{api_key}'
-  base_url: '{api_base}'
-  model: '{model}'
-  llm_support_json: true
-
-# 基础设置
-target_language: 'zh-CN'
-resolution: '1080p'
-max_workers: 2
-
-# 视频存储配置
-video_storage:
-  base_path: './output'
-  
-# TTS配置
-tts:
-  method: 'edge'
-  voice: 'zh-CN-XiaoxiaoNeural'
-  
-# ASR配置  
-asr:
-  method: 'openai_api'
-  
-# 翻译配置
-translation:
-  target_language: 'zh-CN'
-  chunk_size: 800
-  
-# 输出配置
-output:
-  subtitle_enabled: true
-  audio_enabled: true
-"""
-        
-        with open(self.config_file, 'w', encoding='utf-8') as f:
-            f.write(config_content)
-        
-        logger.info(f"✅ 配置文件已创建: {self.config_file}")
-        logger.info("🚀 现在可以运行: vlingo start")
-        return True
-    
-    def install(self):
-        """安装依赖"""
-        logger.info("📦 安装 VideoLingo 依赖...")
-        
-        install_script = self.script_dir / "install_minimal.py"
-        if install_script.exists():
-            subprocess.run([sys.executable, str(install_script)])
-        else:
-            logger.error(f"❌ 安装脚本不存在: {install_script}")
-            return False
-        
-        return True
-    
-    def _check_dependencies(self):
-        """检查依赖"""
-        required_modules = ['streamlit', 'openai', 'requests', 'yaml']
-        missing = []
-        
-        for module in required_modules:
-            try:
-                __import__(module)
-            except ImportError:
-                missing.append(module)
-        
-        if missing:
-            logger.error(f"❌ 缺少依赖: {', '.join(missing)}")
-            logger.info("💡 请运行: vlingo install")
-            return False
-        
-        return True
-    
-    def _check_port(self):
-        """检查端口是否可用"""
-        import socket
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                result = s.connect_ex(('localhost', self.port))
-                return result == 0
-        except:
-            return False
 
 def main():
-    """主函数"""
-    parser = argparse.ArgumentParser(
-        description="VideoLingo 全局命令行管理工具",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-使用示例:
-  vlingo start          # 后台启动应用
-  vlingo start -f       # 前台启动应用  
-  vlingo start -d       # 开发模式启动
-  vlingo stop           # 停止应用
-  vlingo restart        # 重启应用
-  vlingo status         # 查看状态
-  vlingo logs           # 查看日志
-  vlingo logs -f        # 实时日志
-  vlingo setup          # 配置向导
-  vlingo install        # 安装依赖
-        """
-    )
+    # 获取项目根目录
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    vlingo_script = os.path.join(script_dir, "scripts", "vlingo")
     
-    parser.add_argument('command', 
-                       choices=['start', 'stop', 'restart', 'status', 'logs', 'setup', 'install'],
-                       help='要执行的命令')
+    # 检查 scripts/vlingo 是否存在
+    if not os.path.exists(vlingo_script):
+        print(f"❌ 错误: {vlingo_script} 不存在")
+        print("💡 请确保 scripts/vlingo 文件存在且可执行")
+        sys.exit(1)
     
-    parser.add_argument('-f', '--foreground', action='store_true',
-                       help='前台运行 (仅用于start命令)')
-    
-    parser.add_argument('-d', '--dev', action='store_true',
-                       help='开发模式 (仅用于start命令)')
-    
-    parser.add_argument('--follow', action='store_true',
-                       help='实时跟踪日志 (仅用于logs命令)')
-    
-    parser.add_argument('-n', '--lines', type=int, default=50,
-                       help='显示日志行数 (默认: 50)')
-    
-    args = parser.parse_args()
-    
-    # 创建管理器实例
-    manager = VideoLingoManager()
-    
-    # 执行命令
+    # 转发所有参数到 scripts/vlingo
     try:
-        if args.command == 'start':
-            success = manager.start(
-                background=not args.foreground, 
-                dev_mode=args.dev
-            )
-        elif args.command == 'stop':
-            success = manager.stop()
-        elif args.command == 'restart':
-            success = manager.restart(
-                background=not args.foreground,
-                dev_mode=args.dev
-            )
-        elif args.command == 'status':
-            manager.status()
-            success = True
-        elif args.command == 'logs':
-            manager.logs(lines=args.lines, follow=args.follow)
-            success = True
-        elif args.command == 'setup':
-            success = manager.setup()
-        elif args.command == 'install':
-            success = manager.install()
-        
-        sys.exit(0 if success else 1)
-        
+        result = subprocess.run([sys.executable, vlingo_script] + sys.argv[1:], 
+                              cwd=script_dir)
+        sys.exit(result.returncode)
     except KeyboardInterrupt:
-        logger.info("\n👋 用户中断")
+        print("\n👋 用户中断")
         sys.exit(0)
     except Exception as e:
-        logger.error(f"❌ 执行失败: {e}")
+        print(f"❌ 执行失败: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

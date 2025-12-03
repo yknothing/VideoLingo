@@ -1,0 +1,118 @@
+{
+  "audio_samples": {
+    "short_english": {
+      "filename": "short_english.wav",
+      "duration": 3.5,
+      "format": "wav",
+      "sample_rate": 16000,
+      "channels": 1,
+      "language": "en",
+      "content": "Hello, this is a short audio sample for testing.",
+      "size_bytes": 112000,
+      "checksum": "sha256:a1b2c3d4e5f6789012345678901234567890abcdef"
+    },
+    "medium_chinese": {
+      "filename": "medium_chinese.wav", 
+      "duration": 8.2,
+      "format": "wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "language": "zh",
+      "content": "您好，这是一个中等长度的中文音频测试样本，用于测试语音处理功能。",
+      "size_bytes": 361240,
+      "checksum": "sha256:b2c3d4e5f6789012345678901234567890abcdef1"
+    },
+    "long_multilingual": {
+      "filename": "long_multilingual.wav",
+      "duration": 15.7,
+      "format": "wav", 
+      "sample_rate": 44100,
+      "channels": 2,
+      "language": "multi",
+      "content": "This is a longer audio sample that contains multiple languages. 这包含了英语和中文。También tiene algo de español.",
+      "size_bytes": 2765880,
+      "checksum": "sha256:c3d4e5f6789012345678901234567890abcdef12"
+    }
+  },
+  "video_samples": {
+    "mini_tutorial": {
+      "filename": "mini_tutorial.mp4",
+      "duration": 10.0,
+      "format": "mp4",
+      "resolution": "640x480",
+      "fps": 24,
+      "has_audio": true,
+      "audio_language": "en",
+      "content": "Short tutorial video about basic concepts",
+      "size_bytes": 1048576,
+      "checksum": "sha256:d4e5f6789012345678901234567890abcdef123"
+    },
+    "presentation_sample": {
+      "filename": "presentation_sample.mp4", 
+      "duration": 30.5,
+      "format": "mp4",
+      "resolution": "1920x1080", 
+      "fps": 30,
+      "has_audio": true,
+      "audio_language": "zh",
+      "content": "Sample presentation video with Chinese narration",
+      "size_bytes": 5242880,
+      "checksum": "sha256:e5f6789012345678901234567890abcdef1234"
+    },
+    "noaudio_sample": {
+      "filename": "noaudio_sample.mp4",
+      "duration": 5.0,
+      "format": "mp4", 
+      "resolution": "854x480",
+      "fps": 25,
+      "has_audio": false,
+      "audio_language": null,
+      "content": "Video sample without audio track",
+      "size_bytes": 524288,
+      "checksum": "sha256:f6789012345678901234567890abcdef12345"
+    }
+  },
+  "image_samples": {
+    "thumbnail_16_9": {
+      "filename": "thumbnail_16_9.jpg",
+      "format": "jpeg",
+      "dimensions": "1280x720", 
+      "aspect_ratio": "16:9",
+      "content": "Sample thumbnail in 16:9 aspect ratio",
+      "size_bytes": 65536,
+      "checksum": "sha256:789012345678901234567890abcdef123456"
+    },
+    "subtitle_overlay": {
+      "filename": "subtitle_overlay.png",
+      "format": "png",
+      "dimensions": "1920x200",
+      "aspect_ratio": "9.6:1",
+      "content": "Transparent subtitle overlay background",
+      "size_bytes": 32768, 
+      "checksum": "sha256:89012345678901234567890abcdef1234567"
+    }
+  },
+  "subtitle_samples": {
+    "english_srt": {
+      "filename": "english_sample.srt",
+      "format": "srt",
+      "language": "en",
+      "subtitle_count": 15,
+      "duration": 45.2,
+      "content": "Sample English SRT subtitle file",
+      "size_bytes": 2048,
+      "checksum": "sha256:9012345678901234567890abcdef12345678"
+    },
+    "chinese_ass": {
+      "filename": "chinese_sample.ass",
+      "format": "ass", 
+      "language": "zh",
+      "subtitle_count": 12,
+      "duration": 38.7,
+      "content": "Sample Chinese ASS subtitle file with styling",
+      "size_bytes": 4096,
+      "checksum": "sha256:012345678901234567890abcdef123456789"
+    }
+  }
+}
+EOF < /dev/null

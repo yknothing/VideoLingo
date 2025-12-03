@@ -1,0 +1,10 @@
+{
+  "detail": {
+    "status": "insufficient_quota",
+    "message": "Your account has insufficient quota to complete this request. Please check your billing settings.",
+    "more_info": "https://docs.elevenlabs.io/troubleshooting/quota"
+  },
+  "error_code": "insufficient_quota",
+  "request_id": "elevenlabs-req-67890"
+}
+EOF < /dev/null

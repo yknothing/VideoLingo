@@ -1,0 +1,47 @@
+# Configuration with Common Error Scenarios
+api:
+  key: ""  # Missing API key
+  base_url: "not-a-valid-url"  # Invalid URL
+  model: "non-existent-model"
+  llm_support_json: true
+
+max_workers: -1  # Invalid worker count
+target_language: "UnsupportedLanguage"  # Invalid language
+display_language: "invalid-locale"
+youtube_resolution: "999999"  # Invalid resolution
+demucs: "not_a_boolean"  # Wrong type
+burn_subtitles: true
+ffmpeg_gpu: false
+
+whisper:
+  model: "invalid-model-name"
+  language: "xx"  # Invalid language code
+  runtime: "non-existent-runtime"
+
+tts_method: "invalid_tts_method"
+
+subtitle:
+  max_length: 0  # Invalid length
+  target_multiplier: -1.0  # Invalid multiplier
+
+summary_length: -100  # Negative value
+max_split_length: 0  # Zero value
+reflect_translate: "yes"  # Wrong type
+pause_before_translate: 1  # Wrong type
+batch_translate_size: -5  # Negative value
+
+speed_factor:
+  min: 2.0  # Min > max
+  accept: 5.0  # Out of range
+  max: 0.5  # Max < min
+
+min_subtitle_duration: -1.0  # Negative duration
+min_trim_duration: 0  # Zero duration
+tolerance: -0.5  # Negative tolerance
+
+video_storage:
+  base_path: "/nonexistent/path/that/cannot/be/created"
+  input_dir: ""  # Empty directory name
+  temp_dir: "../../dangerous/path"  # Path traversal
+  output_dir: "/root/system/directory"  # System directory
+EOF < /dev/null

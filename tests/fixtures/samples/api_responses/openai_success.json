@@ -1,0 +1,22 @@
+{
+  "id": "chatcmpl-9AbCdEfGhIjKlMnOpQrStUvWxYz",
+  "object": "chat.completion",
+  "created": 1703980800,
+  "model": "gpt-3.5-turbo",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "这是一个测试翻译响应。机器学习正在改变我们的世界，人工智能技术让生活变得更加便利和智能。"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 150,
+    "completion_tokens": 85,
+    "total_tokens": 235
+  }
+}
+EOF < /dev/null

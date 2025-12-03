@@ -1,29 +1,31 @@
 import os
 import streamlit as st
 import io, zipfile
+
 # Video download functionality moved to video_input_section
 from core.st_utils.sidebar_setting import page_setting
 from translations.translations import translate as t
+from core.utils.config_utils import get_storage_paths
+
 
 def download_subtitle_zip_button(text: str):
     zip_buffer = io.BytesIO()
-    output_dir = "output"
-    
+    paths = get_storage_paths()
+    output_dir = paths["output"]
+
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
         for file_name in os.listdir(output_dir):
             if file_name.endswith(".srt"):
                 file_path = os.path.join(output_dir, file_name)
                 with open(file_path, "rb") as file:
                     zip_file.writestr(file_name, file.read())
-    
+
     zip_buffer.seek(0)
-    
+
     st.download_button(
-        label=text,
-        data=zip_buffer,
-        file_name="subtitles.zip",
-        mime="application/zip"
+        label=text, data=zip_buffer, file_name="subtitles.zip", mime="application/zip"
     )
+
 
 # st.markdown
 give_star_button = """

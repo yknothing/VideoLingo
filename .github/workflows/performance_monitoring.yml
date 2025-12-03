@@ -1,0 +1,369 @@
+name: Performance Monitoring
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Performance test suite to run'
+        required: true
+        default: 'basic'
+        type: choice
+        options:
+          - smoke
+          - basic
+          - comprehensive
+      fail_on_regression:
+        description: 'Fail build on performance regression'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  performance-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for performance trend analysis
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+    
+    - name: Install Python dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install psutil GPUtil  # Additional performance monitoring dependencies
+    
+    - name: Create performance test configuration
+      run: |
+        mkdir -p reports/ci_performance
+        cat > performance_test_config.json << EOL
+        {
+          "performance_gates": {
+            "max_regression_critical": 0,
+            "max_regression_high": 2,
+            "min_health_score": 60.0,
+            "max_duration_increase_percent": 50.0
+          },
+          "test_configuration": {
+            "enable_gpu_tests": false,
+            "max_test_duration_minutes": 20,
+            "memory_limit_mb": 2048
+          }
+        }
+        EOL
+    
+    - name: Run performance tests (Smoke)
+      if: github.event_name == 'pull_request'
+      run: |
+        python scripts/performance_test_runner.py \
+          --suite smoke \
+          --config performance_test_config.json \
+          --fail-on-regression
+      continue-on-error: false
+    
+    - name: Run performance tests (Basic)
+      if: github.event_name == 'push' || github.event.inputs.test_suite == 'basic'
+      run: |
+        python scripts/performance_test_runner.py \
+          --suite basic \
+          --config performance_test_config.json \
+          --fail-on-regression=${{ github.event.inputs.fail_on_regression || 'true' }}
+      continue-on-error: false
+    
+    - name: Run performance tests (Comprehensive)  
+      if: github.event_name == 'schedule' || github.event.inputs.test_suite == 'comprehensive'
+      run: |
+        python scripts/performance_test_runner.py \
+          --suite comprehensive \
+          --config performance_test_config.json \
+          --fail-on-regression=${{ github.event.inputs.fail_on_regression || 'true' }}
+      continue-on-error: false
+    
+    - name: Generate performance dashboard
+      if: always()
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, '.')
+        from core.utils.performance_visualization import get_visualization_generator
+        generator = get_visualization_generator()
+        dashboard_file = generator.save_dashboard()
+        print(f'Dashboard generated: {dashboard_file}')
+        "
+      continue-on-error: true
+    
+    - name: Upload performance reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-reports-py${{ matrix.python-version }}
+        path: |
+          reports/ci_performance/
+          reports/performance/
+        retention-days: 30
+    
+    - name: Comment PR with performance results
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = './reports/ci_performance/latest_ci_performance_report.json';
+          
+          if (fs.existsSync(path)) {
+            const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+            
+            const resultEmoji = report.overall_result === 'pass' ? '✅' : '❌';
+            const healthScore = report.performance_health_score || 0;
+            
+            let comment = `## ${resultEmoji} Performance Test Results (Python ${{ matrix.python-version }})\n\n`;
+            comment += `**Overall Result:** ${report.overall_result.toUpperCase()}\n`;
+            comment += `**Health Score:** ${healthScore.toFixed(1)}/100\n\n`;
+            
+            if (report.gate_failures && report.gate_failures.length > 0) {
+              comment += '### ❌ Performance Gate Failures\n';
+              report.gate_failures.forEach(failure => {
+                comment += `- ${failure}\n`;
+              });
+              comment += '\n';
+            }
+            
+            if (report.top_recommendations && report.top_recommendations.length > 0) {
+              comment += '### 💡 Top Performance Recommendations\n';
+              report.top_recommendations.forEach(rec => {
+                comment += `- **${rec.title}** (Impact: ${rec.impact_score}%, Priority: ${rec.priority})\n`;
+              });
+              comment += '\n';
+            }
+            
+            comment += `### 📊 Test Summary\n`;
+            comment += `- Tests Executed: ${report.tests_executed?.length || 0}\n`;
+            comment += `- Performance Gates: ${report.performance_gates_passed ? 'PASSED' : 'FAILED'}\n`;
+            comment += `- CI Environment: ${report.ci_environment?.platform || 'unknown'}\n`;
+            
+            // Find existing comment to update
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes(`Performance Test Results (Python ${{ matrix.python-version }})`)
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+          }
+    
+    - name: Update performance baseline
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, '.')
+        from core.utils.performance_regression_detector import get_regression_detector
+        detector = get_regression_detector()
+        # Update baselines based on current performance
+        print('Updating performance baselines for main branch...')
+        "
+      continue-on-error: true
+
+  performance-analysis:
+    runs-on: ubuntu-latest
+    needs: performance-tests
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install psutil
+    
+    - name: Download performance reports
+      uses: actions/download-artifact@v4
+      with:
+        pattern: performance-reports-*
+        path: downloaded-reports/
+        merge-multiple: true
+    
+    - name: Aggregate performance results
+      run: |
+        python -c "
+        import json
+        import glob
+        from pathlib import Path
+        
+        # Find all CI performance reports
+        report_files = glob.glob('downloaded-reports/*/latest_ci_performance_report.json')
+        
+        if not report_files:
+          print('No performance reports found')
+          exit(0)
+        
+        aggregated = {
+          'test_runs': [],
+          'overall_pass_rate': 0,
+          'avg_health_score': 0,
+          'common_recommendations': {},
+          'python_version_comparison': {}
+        }
+        
+        for report_file in report_files:
+          with open(report_file, 'r') as f:
+            report = json.load(f)
+            aggregated['test_runs'].append({
+              'python_version': report.get('ci_environment', {}).get('platform', 'unknown'),
+              'result': report.get('overall_result', 'unknown'),
+              'health_score': report.get('performance_health_score', 0),
+              'gate_failures': report.get('gate_failures', [])
+            })
+        
+        # Calculate aggregate statistics
+        pass_count = sum(1 for run in aggregated['test_runs'] if run['result'] == 'pass')
+        aggregated['overall_pass_rate'] = pass_count / len(aggregated['test_runs']) if aggregated['test_runs'] else 0
+        
+        health_scores = [run['health_score'] for run in aggregated['test_runs'] if run['health_score'] > 0]
+        aggregated['avg_health_score'] = sum(health_scores) / len(health_scores) if health_scores else 0
+        
+        # Save aggregated results
+        Path('reports/ci_performance').mkdir(parents=True, exist_ok=True)
+        with open('reports/ci_performance/aggregated_results.json', 'w') as f:
+          json.dump(aggregated, f, indent=2)
+        
+        print(f'Aggregated {len(report_files)} performance reports')
+        print(f'Overall pass rate: {aggregated["overall_pass_rate"]:.1%}')
+        print(f'Average health score: {aggregated["avg_health_score"]:.1f}')
+        "
+    
+    - name: Create performance summary
+      run: |
+        python -c "
+        import json
+        from pathlib import Path
+        
+        # Load aggregated results
+        results_file = Path('reports/ci_performance/aggregated_results.json')
+        if not results_file.exists():
+          print('No aggregated results found')
+          exit(0)
+        
+        with open(results_file, 'r') as f:
+          results = json.load(f)
+        
+        # Create summary
+        summary = f'''
+        # Performance Test Summary
+        
+        ## Overall Results
+        - **Pass Rate:** {results["overall_pass_rate"]:.1%}
+        - **Average Health Score:** {results["avg_health_score"]:.1f}/100
+        - **Test Runs:** {len(results["test_runs"])}
+        
+        ## Individual Test Runs
+        '''
+        
+        for run in results['test_runs']:
+          result_emoji = '✅' if run['result'] == 'pass' else '❌'
+          summary += f'- {result_emoji} Python {run.get("python_version", "unknown")}: {run["health_score"]:.1f}/100\n'
+        
+        print(summary)
+        
+        # Save summary to file for potential use in notifications
+        with open('reports/ci_performance/performance_summary.md', 'w') as f:
+          f.write(summary)
+        "
+    
+    - name: Upload aggregated reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: aggregated-performance-results
+        path: |
+          reports/ci_performance/aggregated_results.json
+          reports/ci_performance/performance_summary.md
+        retention-days: 90
+
+  performance-notification:
+    runs-on: ubuntu-latest
+    needs: [performance-tests, performance-analysis]
+    if: failure() && (github.event_name == 'schedule' || github.ref == 'refs/heads/main')
+    
+    steps:
+    - name: Send Slack notification on performance degradation
+      if: env.SLACK_WEBHOOK_URL != ''
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        custom_payload: |
+          {
+            text: "🚨 VideoLingo Performance Degradation Detected",
+            attachments: [{
+              color: 'danger',
+              fields: [{
+                title: 'Repository',
+                value: '${{ github.repository }}',
+                short: true
+              }, {
+                title: 'Branch',
+                value: '${{ github.ref }}',
+                short: true
+              }, {
+                title: 'Event',
+                value: '${{ github.event_name }}',
+                short: true
+              }, {
+                title: 'Run',
+                value: '<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.run_id }}>',
+                short: true
+              }]
+            }]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

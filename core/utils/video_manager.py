@@ -17,6 +17,7 @@ import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from core.utils.config_utils import get_storage_paths
+from core.constants import FileConstants
 
 class VideoFileManager:
     """视频文件管理器 - 基于ID的文件组织系统"""
@@ -162,6 +163,12 @@ class VideoFileManager:
             'file_extension': os.path.splitext(original_filename)[1],
             'moved_from': video_path if video_path != target_input_path else None
         })
+        try:
+            # 记录运行期配置快照（脱敏）
+            from core.utils.config_manager import ConfigManager
+            ConfigManager.export_runtime_snapshot(video_id)
+        except Exception:
+            pass
         
         return video_id
     
@@ -336,11 +343,11 @@ class VideoFileManager:
     def _get_metadata_path(self, video_id: str) -> str:
         """获取元数据文件路径"""
         temp_dir = self.get_temp_dir(video_id)
-        return os.path.join(temp_dir, '.metadata.json')
+        return os.path.join(temp_dir, FileConstants.METADATA_FILENAME)
     
     def _log_overwrite_operation(self, video_id: str, operation_type: str, affected_files: List[str]):
         """记录覆盖操作日志"""
-        log_dir = os.path.join(self.get_temp_dir(video_id), 'logs')
+        log_dir = os.path.join(self.get_temp_dir(video_id), FileConstants.LOGS_DIRNAME)
         os.makedirs(log_dir, exist_ok=True)
         
         log_file = os.path.join(log_dir, 'overwrite_operations.log')

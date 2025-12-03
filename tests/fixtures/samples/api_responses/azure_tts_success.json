@@ -1,0 +1,15 @@
+{
+  "audio_data": "UklGRnBKAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUxKAAA=",
+  "content_type": "audio/wav",
+  "format": "riff-16khz-16bit-mono-pcm",
+  "duration": 3.2,
+  "sample_rate": 16000,
+  "voice": "zh-CN-XiaoxiaoNeural",
+  "metadata": {
+    "request_id": "azure-tts-12345",
+    "processing_time_ms": 850,
+    "voice_style": "neutral",
+    "voice_speed": 1.0
+  }
+}
+EOF < /dev/null

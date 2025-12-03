@@ -1,0 +1,3 @@
+api:
+  key: old-key
+  model: gpt-4

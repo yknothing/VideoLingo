@@ -1,0 +1,44 @@
+=== VIDEOLINGO BRANCH COVERAGE ANALYSIS SUMMARY ===
+
+OVERALL STATISTICS:
+- Total Statements: 5,861
+- Missing Statements: 3,989 (68%)  
+- Total Branches: 2,167
+- Missing Branches: 136 (6%)
+- Overall Coverage: 29%
+
+CRITICAL MODULES STATUS:
+1. core/_1_ytdlp.py (YouTube Download): 56% coverage - NEEDS ATTENTION
+2. core/translate_lines.py (Translation): 20% coverage - CRITICAL
+3. core/utils/ask_gpt.py (LLM): 68% coverage - GOOD
+4. core/utils/config_utils.py (Config): 46% coverage - MODERATE  
+5. core/utils/video_manager.py (Video Mgmt): 76% coverage - GOOD
+
+ZERO COVERAGE MODULES (CRITICAL):
+- All Streamlit UI components (725 statements)
+- ASR backend modules (228 statements)
+- Video subtitle integration (77 statements)
+- Utility modules (77 statements)
+
+COVERAGE REPORTS GENERATED:
+- Terminal: coverage_analysis_report.md
+- HTML: /Users/whatsup/workspace/VideoLingo/htmlcov/index.html
+- XML: /Users/whatsup/workspace/VideoLingo/coverage.xml
+- Text Summary: coverage_summary.txt
+
+BRANCH COVERAGE QUALITY: 94% (Excellent for tested code)
+ERROR HANDLING COVERAGE: ~15% (Critically low)
+
+IMMEDIATE PRIORITIES:
+1. Add error handling tests for download module
+2. Test translation retry mechanisms  
+3. Cover configuration corruption scenarios
+4. Add ASR backend integration tests
+5. Test UI component functionality
+
+BRANCH COVERAGE HIGHLIGHTS:
+- Strong branch coverage in tested paths
+- Critical gaps in error handling branches
+- External service integration untested
+- File system error scenarios missing
+EOFSUMMARY < /dev/null

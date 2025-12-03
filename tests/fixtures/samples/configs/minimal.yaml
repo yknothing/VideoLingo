@@ -1,0 +1,20 @@
+# Minimal VideoLingo Configuration for Testing
+api:
+  key: "test-api-key"
+  base_url: "https://test.example.com/v1"
+  model: "test-model"
+  llm_support_json: true
+
+max_workers: 1
+target_language: "English"
+tts_method: "edge_tts"
+demucs: false
+burn_subtitles: false
+ffmpeg_gpu: false
+
+video_storage:
+  base_path: ""
+  input_dir: "input"
+  temp_dir: "temp"
+  output_dir: "output"
+EOF < /dev/null

@@ -1,0 +1,52 @@
+# Azure Configuration for Testing
+api:
+  key: "azure-api-key-example"
+  base_url: "https://test-instance.openai.azure.com/"
+  model: "gpt-35-turbo"
+  llm_support_json: true
+
+azure_tts:
+  api_key: "azure-tts-key-example"
+  region: "eastus"
+  voice: "zh-CN-XiaoxiaoNeural"
+
+max_workers: 3
+target_language: "简体中文"
+display_language: "zh-CN"
+youtube_resolution: "1080"
+demucs: true
+burn_subtitles: true
+ffmpeg_gpu: true
+
+whisper:
+  model: "large-v3"
+  language: "en"
+  runtime: "local"
+
+tts_method: "azure_tts"
+
+subtitle:
+  max_length: 80
+  target_multiplier: 1.3
+
+summary_length: 10000
+max_split_length: 25
+reflect_translate: true
+pause_before_translate: true
+batch_translate_size: 20
+
+speed_factor:
+  min: 0.8
+  accept: 1.1
+  max: 1.3
+
+min_subtitle_duration: 3.0
+min_trim_duration: 4.0
+tolerance: 2.0
+
+video_storage:
+  base_path: "/custom/storage/path"
+  input_dir: "videos_input"
+  temp_dir: "processing"
+  output_dir: "final_output"
+EOF < /dev/null

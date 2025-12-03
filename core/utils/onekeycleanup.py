@@ -4,16 +4,38 @@ from core._1_ytdlp import find_video_files
 from core.utils.config_utils import get_storage_paths
 import shutil
 
+
+def cleanup_temp_files():
+    """Clean up temporary files for testing compatibility"""
+    paths = get_storage_paths()
+    temp_dir = paths.get("temp")
+    if temp_dir and os.path.exists(temp_dir):
+        try:
+            # Only clean specific temporary processing files, not the entire directory
+            temp_patterns = [
+                os.path.join(temp_dir, "log", "*"),
+                os.path.join(temp_dir, "audio", "tmp", "*"),
+                os.path.join(temp_dir, "*.tmp"),
+            ]
+            for pattern in temp_patterns:
+                for file_path in glob.glob(pattern):
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+        except Exception:
+            # Silently ignore cleanup errors in tests
+            pass
+
+
 def cleanup(history_dir="history"):
     # Get configured storage paths
     paths = get_storage_paths()
-    
+
     # Get video file name
     video_file = find_video_files()
     video_name = os.path.basename(video_file)
     video_name = os.path.splitext(video_name)[0]
     video_name = sanitize_filename(video_name)
-    
+
     # Create required folders
     os.makedirs(history_dir, exist_ok=True)
     video_history_dir = os.path.join(history_dir, video_name)
@@ -23,11 +45,11 @@ def cleanup(history_dir="history"):
     os.makedirs(gpt_log_dir, exist_ok=True)
 
     # Move files from temp directory (processing files)
-    temp_dir = paths['temp']
+    temp_dir = paths["temp"]
     if os.path.exists(temp_dir):
         # Move non-log files from temp
         for file in glob.glob(f"{temp_dir}/*"):
-            if not file.endswith(('log', 'gpt_log')):
+            if not file.endswith(("log", "gpt_log")):
                 move_file(file, video_history_dir)
 
         # Move log files from temp
@@ -43,14 +65,15 @@ def cleanup(history_dir="history"):
                 move_file(file, gpt_log_dir)
 
     # Move files from output directory (final results)
-    output_dir = paths['output']
+    output_dir = paths["output"]
     if os.path.exists(output_dir):
         for file in glob.glob(f"{output_dir}/*"):
-            if not file.endswith(('log', 'gpt_log')):
+            if not file.endswith(("log", "gpt_log")):
                 move_file(file, video_history_dir)
 
     # SAFETY: Only clean up empty directories, never delete configured directories
     # Clean up empty subdirectories but preserve the main structure
+
 
 def move_file(src, dst):
     try:
@@ -58,7 +81,7 @@ def move_file(src, dst):
         src_filename = os.path.basename(src)
         # Use os.path.join to ensure correct path and include file name
         dst = os.path.join(dst, sanitize_filename(src_filename))
-        
+
         if os.path.exists(dst):
             if os.path.isdir(dst):
                 # If destination is a folder, try to delete its contents
@@ -66,7 +89,7 @@ def move_file(src, dst):
             else:
                 # If destination is a file, try to delete it
                 os.remove(dst)
-        
+
         shutil.move(src, dst, copy_function=shutil.copy2)
         print(f"✅ Moved: {src} -> {dst}")
     except PermissionError:
@@ -82,12 +105,14 @@ def move_file(src, dst):
         print(f"❌ Move failed: {src} -> {dst}")
         print(f"Error message: {str(e)}")
 
+
 def sanitize_filename(filename):
     # Remove or replace disallowed characters
     invalid_chars = '<>:"/\\|?*'
     for char in invalid_chars:
-        filename = filename.replace(char, '_')
+        filename = filename.replace(char, "_")
     return filename
+
 
 if __name__ == "__main__":
     cleanup()

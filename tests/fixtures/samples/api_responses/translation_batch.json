@@ -1,0 +1,44 @@
+{
+  "translations": [
+    {
+      "id": "trans_001",
+      "source": "Hello, welcome to our video tutorial.",
+      "target": "你好，欢迎观看我们的视频教程。",
+      "confidence": 0.95,
+      "processing_time_ms": 120
+    },
+    {
+      "id": "trans_002", 
+      "source": "Today we will learn about machine learning.",
+      "target": "今天我们将学习机器学习。",
+      "confidence": 0.92,
+      "processing_time_ms": 95
+    },
+    {
+      "id": "trans_003",
+      "source": "This technology is transforming many industries.",
+      "target": "这项技术正在改变许多行业。", 
+      "confidence": 0.88,
+      "processing_time_ms": 145
+    },
+    {
+      "id": "trans_004",
+      "source": "Thank you for watching, and see you next time.",
+      "target": "谢谢观看，我们下次再见。",
+      "confidence": 0.97,
+      "processing_time_ms": 110
+    }
+  ],
+  "metadata": {
+    "total_items": 4,
+    "successful": 4,
+    "failed": 0,
+    "average_confidence": 0.93,
+    "total_processing_time_ms": 470,
+    "source_language": "en",
+    "target_language": "zh-CN",
+    "model": "gpt-3.5-turbo",
+    "timestamp": "2024-01-15T10:30:00Z"
+  }
+}
+EOF < /dev/null

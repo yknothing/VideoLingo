@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  videolingo-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./output:/app/output
+      - ./custom_terms.xlsx:/app/custom_terms.xlsx
+      - ./_model_cache:/app/_model_cache
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    stdin_open: true
+    tty: true

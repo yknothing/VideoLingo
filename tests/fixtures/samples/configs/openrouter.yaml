@@ -1,0 +1,47 @@
+# OpenRouter Configuration for Testing
+api:
+  key: "sk-or-v1-test-key-example"
+  base_url: "https://openrouter.ai/api/v1"
+  model: "anthropic/claude-3.5-sonnet"
+  llm_support_json: true
+
+max_workers: 2
+target_language: "简体中文"
+display_language: "zh-CN"
+youtube_resolution: "1080"
+demucs: true
+burn_subtitles: true
+ffmpeg_gpu: false
+
+whisper:
+  model: "large-v3"
+  language: "en"
+  runtime: "local"
+
+tts_method: "openai_tts"
+
+subtitle:
+  max_length: 75
+  target_multiplier: 1.2
+
+summary_length: 8000
+max_split_length: 20
+reflect_translate: true
+pause_before_translate: false
+batch_translate_size: 15
+
+speed_factor:
+  min: 1.0
+  accept: 1.2
+  max: 1.4
+
+min_subtitle_duration: 2.5
+min_trim_duration: 3.5
+tolerance: 1.5
+
+video_storage:
+  base_path: ""
+  input_dir: "input"
+  temp_dir: "temp"
+  output_dir: "output"
+EOF < /dev/null

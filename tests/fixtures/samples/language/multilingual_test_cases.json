@@ -1,0 +1,183 @@
+{
+  "test_cases": [
+    {
+      "case_id": "ml_001",
+      "name": "Basic greeting in multiple languages",
+      "scenarios": [
+        {
+          "language": "en",
+          "text": "Hello, how are you?",
+          "expected_duration": 1.8,
+          "complexity": "simple"
+        },
+        {
+          "language": "zh", 
+          "text": "你好，你好吗？",
+          "expected_duration": 2.1,
+          "complexity": "simple"
+        },
+        {
+          "language": "es",
+          "text": "Hola, ¿cómo estás?",
+          "expected_duration": 1.9,
+          "complexity": "simple"
+        },
+        {
+          "language": "fr",
+          "text": "Bonjour, comment allez-vous?",
+          "expected_duration": 2.3,
+          "complexity": "simple"
+        }
+      ]
+    },
+    {
+      "case_id": "ml_002",
+      "name": "Technical AI terminology",
+      "scenarios": [
+        {
+          "language": "en",
+          "text": "Neural networks use backpropagation for training.",
+          "expected_duration": 3.2,
+          "complexity": "complex",
+          "terms": ["neural networks", "backpropagation", "training"]
+        },
+        {
+          "language": "zh",
+          "text": "神经网络使用反向传播进行训练。",
+          "expected_duration": 3.8,
+          "complexity": "complex", 
+          "terms": ["神经网络", "反向传播", "训练"]
+        },
+        {
+          "language": "es",
+          "text": "Las redes neuronales usan retropropagación para entrenar.",
+          "expected_duration": 3.5,
+          "complexity": "complex",
+          "terms": ["redes neuronales", "retropropagación", "entrenar"]
+        }
+      ]
+    },
+    {
+      "case_id": "ml_003",
+      "name": "Mixed language content",
+      "scenarios": [
+        {
+          "language": "mixed",
+          "text": "This AI system uses 机器学习 and deep learning techniques.",
+          "expected_duration": 4.2,
+          "complexity": "complex",
+          "languages": ["en", "zh"],
+          "notes": "Code-switching example"
+        },
+        {
+          "language": "mixed",
+          "text": "El sistema de IA utiliza machine learning y 深度学习 algorithms.",
+          "expected_duration": 4.8,
+          "complexity": "complex",
+          "languages": ["es", "en", "zh"],
+          "notes": "Three-language mixing"
+        }
+      ]
+    },
+    {
+      "case_id": "ml_004", 
+      "name": "Long sentences with complex grammar",
+      "scenarios": [
+        {
+          "language": "en",
+          "text": "The revolutionary artificial intelligence system, which was developed by researchers at leading universities, demonstrates unprecedented capabilities in natural language processing, computer vision, and predictive analytics across multiple domains.",
+          "expected_duration": 12.5,
+          "complexity": "very_complex",
+          "word_count": 32
+        },
+        {
+          "language": "zh",
+          "text": "这个由顶尖大学研究人员开发的革命性人工智能系统，在自然语言处理、计算机视觉和多领域预测分析方面展现出前所未有的能力。",
+          "expected_duration": 14.2,
+          "complexity": "very_complex",
+          "character_count": 56
+        }
+      ]
+    },
+    {
+      "case_id": "ml_005",
+      "name": "Edge cases and special characters",
+      "scenarios": [
+        {
+          "language": "en",
+          "text": "The URL https://example.com/api/v1 returns JSON data with UTF-8 encoding.",
+          "expected_duration": 4.5,
+          "complexity": "medium",
+          "special_elements": ["url", "technical_terms", "abbreviations"]
+        },
+        {
+          "language": "zh",
+          "text": "这个API接口返回JSON格式的UTF-8编码数据。",
+          "expected_duration": 4.8,
+          "complexity": "medium",
+          "special_elements": ["english_terms", "technical_abbreviations"]
+        },
+        {
+          "language": "mixed",
+          "text": "The config.yaml file contains API_KEY = 'sk-1234567890abcdef'.",
+          "expected_duration": 3.8,
+          "complexity": "medium",
+          "special_elements": ["file_paths", "variable_names", "api_keys"]
+        }
+      ]
+    }
+  ],
+  "language_characteristics": {
+    "en": {
+      "avg_words_per_minute": 150,
+      "avg_syllables_per_word": 1.4,
+      "character_weight": 1.0,
+      "splitting_pattern": "\\s+"
+    },
+    "zh": {
+      "avg_chars_per_minute": 200,
+      "avg_syllables_per_char": 1.0,
+      "character_weight": 1.75,
+      "splitting_pattern": ""
+    },
+    "es": {
+      "avg_words_per_minute": 140,
+      "avg_syllables_per_word": 1.6,
+      "character_weight": 1.1,
+      "splitting_pattern": "\\s+"
+    },
+    "fr": {
+      "avg_words_per_minute": 130,
+      "avg_syllables_per_word": 1.5,
+      "character_weight": 1.1,
+      "splitting_pattern": "\\s+"
+    }
+  },
+  "error_scenarios": [
+    {
+      "error_type": "unsupported_language",
+      "input": {
+        "language": "xyz",
+        "text": "This is text in an unsupported language code."
+      },
+      "expected_error": "UnsupportedLanguageError"
+    },
+    {
+      "error_type": "empty_text",
+      "input": {
+        "language": "en",
+        "text": ""
+      },
+      "expected_error": "EmptyTextError"
+    },
+    {
+      "error_type": "invalid_characters",
+      "input": {
+        "language": "en",
+        "text": "Text with \x00 null bytes and \x01 control chars."
+      },
+      "expected_error": "InvalidCharacterError"
+    }
+  ]
+}
+EOF < /dev/null

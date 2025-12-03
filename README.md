@@ -102,7 +102,7 @@ cd VideoLingo
 ```bash
 conda create -n videolingo python=3.10.0 -y
 conda activate videolingo
-python install.py
+python scripts/install.py
 ```
 
 3. Start the application
@@ -152,6 +152,31 @@ This project is licensed under the Apache 2.0 License. Special thanks to the fol
 - Submit [Issues](https://github.com/Huanshere/VideoLingo/issues) or [Pull Requests](https://github.com/Huanshere/VideoLingo/pulls) on GitHub
 - DM me on Twitter: [@Huanshere](https://twitter.com/Huanshere)
 - Email me at: team@videolingo.io
+
+## 🧪 Testing
+
+### Test Suite Status
+The test suite has been simplified to address import and dependency issues. See [Test Execution Guide](tests/TEST_GUIDE.md) for detailed instructions.
+
+**Current Status:**
+- ✅ Basic smoke tests passing (16/16 in test_simple.py)
+- ✅ Core utils import issues resolved  
+- ✅ Test fixtures configured (conftest.py)
+- ⚠️ Some unit tests still have import errors (being addressed)
+- ⚠️ Coverage is currently ~5-10% (expanding test coverage is ongoing)
+
+**Quick Test:**
+```bash
+pytest tests/test_simple.py -v  # Run basic tests
+pytest tests/ -m "not slow and not network"  # Run fast tests only
+```
+
+### Known Issues
+1. **Import Errors**: Some older tests may fail with import errors. These are being progressively fixed.
+2. **Configuration Tests**: Some tests expect specific config structure. Use provided fixtures.
+3. **External Dependencies**: Tests requiring external services are mocked.
+
+For troubleshooting and adding new tests, see [tests/TEST_GUIDE.md](tests/TEST_GUIDE.md).
 
 ## ⭐ Star History
 

@@ -1,5 +1,6 @@
 # use try-except to avoid error when installing
 try:
+    # Lazy import heavy modules to avoid optional deps (e.g., cv2) during tests
     from . import (
         _1_ytdlp,
         _2_asr,
@@ -9,7 +10,7 @@ try:
         _4_2_translate,
         _5_split_sub,
         _6_gen_sub,
-        _7_sub_into_vid,
+        # _7_sub_into_vid,  # requires cv2; import only when needed
         _8_1_audio_task,
         _8_2_dub_chunks,
         _9_refer_audio,
@@ -37,7 +38,7 @@ __all__ = [
     '_4_2_translate',
     '_5_split_sub',
     '_6_gen_sub',
-    '_7_sub_into_vid',
+    # '_7_sub_into_vid',
     '_8_1_audio_task',
     '_8_2_dub_chunks',
     '_9_refer_audio',

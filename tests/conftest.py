@@ -1,365 +1,126 @@
-# VideoLingo Test Configuration
-# pytest configuration and shared fixtures
-# 安全拦截：屏蔽通过 entry points 自动加载的特定第三方插件（如 pytest_postgresql），避免环境依赖阻塞
-# 仅影响测试运行时的插件加载，不修改生产源码
+"""
+Pytest configuration and fixtures for VideoLingo tests
+"""
 
 import os
-import sys
 import tempfile
-import shutil
 import pytest
-import json
+import yaml
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 
-# 在导入任何可能触发插件扫描的库之前，拦截 pytest11 entry points
-try:
-    import importlib.metadata as importlib_metadata  # py3.8+
-except Exception:  # pragma: no cover
-    import importlib_metadata  # type: ignore
-
-def _iter_filtered_pytest_entry_points(group: str):
-    """过滤掉包含敏感关键词的 pytest 插件 entry points，防止自动加载导致环境依赖错误。"""
-    BLOCK_KEYWORDS = ("pytest_postgresql", "psycopg")
-    try:
-        for ep in importlib_metadata.entry_points().select(group=group):  # type: ignore[attr-defined]
-            name = getattr(ep, "name", "") or ""
-            value = getattr(ep, "value", "") or ""
-            module = getattr(ep, "module", "") or ""
-            full_text = f"{name}|{value}|{module}".lower()
-            if any(k in full_text for k in BLOCK_KEYWORDS):
-                # 跳过加载
-                continue
-            yield ep
-    except Exception:
-        # 兼容旧版 importlib_metadata API
-        eps = importlib_metadata.entry_points().get(group, [])  # type: ignore[call-arg]
-        for ep in eps:
-            name = getattr(ep, "name", "") or ""
-            value = getattr(ep, "value", "") or ""
-            module = getattr(ep, "module", "") or ""
-            full_text = f"{name}|{value}|{module}".lower()
-            if any(k in full_text for k in BLOCK_KEYWORDS):
-                continue
-            yield ep
-
-# Monkey-patch 让 pytest 在扫描 setuptools entry points 时只看到过滤后的集合
-try:
-    _orig_entry_points = importlib_metadata.entry_points
-    def _patched_entry_points(*args, **kwargs):
-        # 统一返回对象，保证 select 可用
-        class _SelectableList(list):
-            def select(self, **kw):
-                group = kw.get("group")
-                if group == "pytest11":
-                    return _SelectableList(_iter_filtered_pytest_entry_points("pytest11"))
-                # 其他分组保持原样
-                try:
-                    return _orig_entry_points().select(**kw)  # type: ignore[func-returns-value]
-                except Exception:
-                    return _SelectableList(_orig_entry_points().get(group, []))  # type: ignore[attr-defined]
-        # 无参调用时返回一个支持 select 的对象
-        return _SelectableList(_iter_filtered_pytest_entry_points("pytest11"))
-    importlib_metadata.entry_points = _patched_entry_points  # type: ignore[assignment]
-except Exception:
-    pass
-
-# Add project root to sys.path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
-@pytest.fixture(scope="session")
-def temp_work_dir():
-    """Create a temporary working directory for all tests"""
-    temp_dir = tempfile.mkdtemp(prefix="videolingo_test_")
-    os.chdir(temp_dir)
-    yield temp_dir
-    # Cleanup after all tests
-    shutil.rmtree(temp_dir, ignore_errors=True)
 
 @pytest.fixture
-def temp_config_dir(temp_work_dir):
-    """Create temporary config directory structure"""
-    config_dir = Path(temp_work_dir) / "config"
-    config_dir.mkdir(exist_ok=True)
-    
-    # Create default test config
-    test_config = {
-        "api": {
-            "key": "test-api-key",
-            "base_url": "https://api.openai.com/v1",
-            "model": "gpt-4",
-            "llm_support_json": True
-        },
-        "paths": {
-            "input": str(config_dir / "input"),
-            "temp": str(config_dir / "temp"),
-            "output": str(config_dir / "output")
-        },
-        "asr": {
-            "whisper": {
-                "model": "base",
-                "language": "auto",
-                "device": "cpu"
+def temp_config_dir():
+    """Create a temporary directory with a basic config.yaml file for testing"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        
+        # Create a sample config.yaml
+        config_data = {
+            'api': {
+                'key': 'test-api-key',
+                'endpoint': 'https://api.example.com'
+            },
+            'asr': {
+                'whisper': {
+                    'model': 'base',
+                    'language': 'en'
+                }
+            },
+            'paths': {
+                'input': str(temp_path / 'input'),
+                'temp': str(temp_path / 'temp'),
+                'output': str(temp_path / 'output')
             }
-        },
-        "tts": {
-            "engine": "openai",
-            "voice": "alloy",
-            "speed": 1.0
-        },
-        "translation": {
-            "target_language": "Chinese (Simplified)",
-            "chunk_size": 1000
-        },
-        "allowed_video_formats": ["mp4", "avi", "mov", "mkv"],
-        "allowed_audio_formats": ["mp3", "wav", "m4a"]
-    }
-    
-    config_file = config_dir / "config.yaml"
-    import yaml
-    with open(config_file, 'w') as f:
-        yaml.dump(test_config, f)
-    
-    # Create directory structure
-    for path in ["input", "temp", "output"]:
-        (config_dir / path).mkdir(exist_ok=True)
-    
-    return config_dir
+        }
+        
+        config_file = temp_path / 'config.yaml'
+        with open(config_file, 'w') as f:
+            yaml.dump(config_data, f)
+        
+        yield temp_path
+
 
 @pytest.fixture
-def mock_video_file(temp_config_dir):
-    """Create a mock video file for testing"""
-    video_path = temp_config_dir / "input" / "test_video.mp4"
-    # Create a small mock video file (just bytes)
-    with open(video_path, 'wb') as f:
-        f.write(b'fake_video_content' * 1000)  # ~17KB file
+def temp_dir():
+    """Create a temporary directory for tests"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        yield Path(temp_dir)
+
+
+@pytest.fixture
+def sample_video_file(temp_dir):
+    """Create a sample video file for testing"""
+    video_path = temp_dir / "sample_video.mp4"
+    # Create a dummy file (not a real video, just for testing file operations)
+    video_path.write_bytes(b"dummy video content")
     return str(video_path)
 
+
 @pytest.fixture
-def mock_audio_file(temp_config_dir):
-    """Create a mock audio file for testing"""
-    audio_path = temp_config_dir / "input" / "test_audio.mp3"
-    with open(audio_path, 'wb') as f:
-        f.write(b'fake_audio_content' * 500)  # ~8.5KB file
+def sample_audio_file(temp_dir):
+    """Create a sample audio file for testing"""
+    audio_path = temp_dir / "sample_audio.mp3"
+    # Create a dummy file (not a real audio, just for testing file operations)
+    audio_path.write_bytes(b"dummy audio content")
     return str(audio_path)
 
-@pytest.fixture
-def mock_whisperx_result():
-    """Mock WhisperX transcription result"""
-    return {
-        "segments": [
-            {
-                "start": 0.0,
-                "end": 2.5,
-                "text": "Hello world",
-                "words": [
-                    {"start": 0.0, "end": 0.5, "word": "Hello"},
-                    {"start": 0.6, "end": 1.0, "word": "world"}
-                ]
-            },
-            {
-                "start": 2.5,
-                "end": 5.0,
-                "text": "This is a test",
-                "words": [
-                    {"start": 2.5, "end": 2.8, "word": "This"},
-                    {"start": 2.9, "end": 3.1, "word": "is"},
-                    {"start": 3.2, "end": 3.3, "word": "a"},
-                    {"start": 3.4, "end": 3.8, "word": "test"}
-                ]
-            }
-        ],
-        "language": "en"
-    }
 
 @pytest.fixture
-def mock_llm_response():
-    """Mock LLM API response"""
+def mock_config():
+    """Provide a mock configuration dictionary"""
     return {
-        "choices": [
-            {
-                "message": {
-                    "content": '{"translation": "你好世界", "confidence": 0.95}'
-                }
-            }
-        ],
-        "usage": {
-            "prompt_tokens": 50,
-            "completion_tokens": 20,
-            "total_tokens": 70
+        'api': {
+            'key': 'test-key',
+            'model': 'gpt-4'
+        },
+        'whisper': {
+            'model': 'base',
+            'runtime': 'local'
+        },
+        'paths': {
+            'input': '/tmp/input',
+            'temp': '/tmp/temp',
+            'output': '/tmp/output'
         }
     }
 
-@pytest.fixture
-def mock_streamlit():
-    """Mock Streamlit components for UI testing"""
-    with patch('streamlit.session_state', {}), \
-         patch('streamlit.sidebar'), \
-         patch('streamlit.header'), \
-         patch('streamlit.button', return_value=False), \
-         patch('streamlit.text_input', return_value=""), \
-         patch('streamlit.selectbox', return_value="test"), \
-         patch('streamlit.file_uploader', return_value=None), \
-         patch('streamlit.progress'), \
-         patch('streamlit.empty'), \
-         patch('streamlit.success'), \
-         patch('streamlit.error'), \
-         patch('streamlit.warning'), \
-         patch('streamlit.info'):
-        yield
 
 @pytest.fixture
-def mock_subprocess():
-    """Mock subprocess calls for external tools"""
-    with patch('subprocess.run') as mock_run, \
-         patch('subprocess.Popen') as mock_popen:
-        
-        # Mock successful subprocess calls
-        mock_run.return_value = Mock(returncode=0, stdout="success", stderr="")
-        
-        # Mock Popen for streaming output
-        mock_process = Mock()
-        mock_process.stdout.readline.side_effect = ["line1\n", "line2\n", ""]
-        mock_process.wait.return_value = 0
-        mock_process.returncode = 0
-        mock_popen.return_value = mock_process
-        
-        yield {"run": mock_run, "popen": mock_popen}
-
-@pytest.fixture
-def mock_openai_client():
-    """Mock OpenAI client for LLM testing"""
-    with patch('openai.OpenAI') as mock_client_class:
-        mock_client = Mock()
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = '{"result": "test"}'
-        mock_client.chat.completions.create.return_value = mock_response
-        mock_client_class.return_value = mock_client
-        yield mock_client
-
-@pytest.fixture
-def mock_torch():
-    """Mock PyTorch for ASR testing"""
-    with patch('torch.cuda.is_available', return_value=False), \
-         patch('torch.load'), \
-         patch('torch.save'):
-        yield
-
-@pytest.fixture
-def mock_whisperx():
-    """Mock WhisperX for ASR testing"""
-    mock_model = Mock()
-    mock_model.transcribe.return_value = {
-        "segments": [
-            {"start": 0.0, "end": 1.0, "text": "test transcription"}
-        ]
+def mock_openai(mocker):
+    """Mock OpenAI API calls"""
+    mock = mocker.patch('openai.ChatCompletion.create')
+    mock.return_value = {
+        'choices': [{
+            'message': {
+                'content': 'Mocked response'
+            }
+        }]
     }
-    
-    with patch('whisperx.load_model', return_value=mock_model), \
-         patch('whisperx.load_align_model'), \
-         patch('whisperx.align'):
-        yield mock_model
+    return mock
+
+
+@pytest.fixture
+def mock_subprocess(mocker):
+    """Mock subprocess calls"""
+    mock_run = mocker.patch('subprocess.run')
+    mock_run.return_value.returncode = 0
+    mock_run.return_value.stdout = "Mock output"
+    mock_run.return_value.stderr = ""
+    return mock_run
+
 
 @pytest.fixture(autouse=True)
-def reset_environment():
-    """Reset environment variables before each test"""
-    # Store original environment
-    original_env = dict(os.environ)
+def isolate_tests(monkeypatch):
+    """Isolate tests from system environment"""
+    # Clear VideoLingo-specific environment variables
+    env_vars_to_clear = [
+        'VIDEOLINGO_CONFIG_DIR',
+        'VIDEOLINGO_API_KEY',
+        'VIDEOLINGO_BASE_PATH'
+    ]
+    for var in env_vars_to_clear:
+        monkeypatch.delenv(var, raising=False)
     
-    # Set test environment
-    os.environ.update({
-        'VIDEOLINGO_TEST_MODE': '1',
-        'OPENAI_API_KEY': 'test-key',
-        'VIDEOLINGO_CONFIG_PATH': '',
-    })
-    
-    yield
-    
-    # Restore original environment
-    os.environ.clear()
-    os.environ.update(original_env)
-
-@pytest.fixture
-def mock_file_operations():
-    """Mock file operations to prevent actual file I/O in tests"""
-    def mock_exists(path):
-        # Simulate existence for common test files
-        return str(path).endswith(('.mp4', '.mp3', '.yaml', '.json'))
-    
-    with patch('os.path.exists', side_effect=mock_exists), \
-         patch('os.makedirs'), \
-         patch('shutil.copy2'), \
-         patch('shutil.rmtree'):
-        yield
-
-class MockResponse:
-    """Mock HTTP response for API testing"""
-    def __init__(self, json_data, status_code=200):
-        self.json_data = json_data
-        self.status_code = status_code
-        self.text = json.dumps(json_data)
-    
-    def json(self):
-        return self.json_data
-    
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            raise Exception(f"HTTP {self.status_code}")
-
-@pytest.fixture
-def mock_requests():
-    """Mock requests library for HTTP testing"""
-    with patch('requests.post') as mock_post, \
-         patch('requests.get') as mock_get:
-        
-        # Default successful responses
-        mock_post.return_value = MockResponse({"status": "success"})
-        mock_get.return_value = MockResponse({"status": "success"})
-        
-        yield {"post": mock_post, "get": mock_get}
-
-# Test markers for different test categories
-pytest_plugins = []
-
-def pytest_configure(config):
-    """Configure pytest markers"""
-    config.addinivalue_line(
-        "markers", "unit: mark test as a unit test"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "gpu: mark test as requiring GPU"
-    )
-    config.addinivalue_line(
-        "markers", "network: mark test as requiring network access"
-    )
-
-def pytest_collection_modifyitems(config, items):
-    """Auto-mark tests based on path and name"""
-    for item in items:
-        # Mark unit tests
-        if "unit" in str(item.fspath) or item.name.startswith("test_unit_"):
-            item.add_marker(pytest.mark.unit)
-        
-        # Mark integration tests
-        if "integration" in str(item.fspath) or item.name.startswith("test_integration_"):
-            item.add_marker(pytest.mark.integration)
-        
-        # Mark slow tests
-        if "slow" in item.name or "test_full_pipeline" in item.name:
-            item.add_marker(pytest.mark.slow)
-        
-        # Mark GPU tests
-        if "gpu" in item.name or "cuda" in item.name:
-            item.add_marker(pytest.mark.gpu)
-        
-        # Mark network tests
-        if "download" in item.name or "api" in item.name:
-            item.add_marker(pytest.mark.network)
+    # Set test mode
+    monkeypatch.setenv('VIDEOLINGO_TEST_MODE', '1')

@@ -1,17 +1,28 @@
-import streamlit as st
+# ------------
+# 优先设置路径，确保加载本地 core 包
+# ------------
 import os, sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# 使用 insert(0, ...) 确保本地包优先级最高
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+os.environ['PATH'] += os.pathsep + current_dir
+
+# 现在安全导入
+import streamlit as st
 from core.st_utils.imports_and_utils import *
 from core import *
 from core.utils.config_utils import get_storage_paths
+from core.utils.config_manager import ConfigManager
 from core.utils.video_manager import get_video_manager
 from core.utils.path_adapter import get_path_adapter
 
-# SET PATH
-current_dir = os.path.dirname(os.path.abspath(__file__))
-os.environ['PATH'] += os.pathsep + current_dir
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 st.set_page_config(page_title="VideoLingo", page_icon="docs/logo.svg")
+try:
+    ConfigManager.initialize()
+except Exception as e:
+    # Fail-fast for config issues in headless start; in UI we surface minimal error
+    print(f"Config initialization failed: {str(e)}")
 
 # Initialize video management system
 video_mgr = get_video_manager()

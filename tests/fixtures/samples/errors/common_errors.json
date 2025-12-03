@@ -1,0 +1,225 @@
+{
+  "api_errors": [
+    {
+      "error_type": "rate_limit_exceeded",
+      "description": "API rate limit exceeded error",
+      "http_status": 429,
+      "error_response": {
+        "error": {
+          "message": "Rate limit exceeded. Requests: 1000 per hour. Try again later.",
+          "type": "rate_limit_error",
+          "code": "rate_limit_exceeded"
+        }
+      },
+      "retry_strategy": {
+        "should_retry": true,
+        "backoff_seconds": 60,
+        "max_retries": 5
+      }
+    },
+    {
+      "error_type": "invalid_api_key",
+      "description": "Invalid or missing API key", 
+      "http_status": 401,
+      "error_response": {
+        "error": {
+          "message": "Invalid API key provided.",
+          "type": "invalid_request_error",
+          "code": "invalid_api_key"
+        }
+      },
+      "retry_strategy": {
+        "should_retry": false,
+        "requires_fix": "API key configuration"
+      }
+    },
+    {
+      "error_type": "service_unavailable",
+      "description": "Service temporarily unavailable",
+      "http_status": 503,
+      "error_response": {
+        "error": {
+          "message": "The service is temporarily unavailable. Please try again later.",
+          "type": "service_error", 
+          "code": "service_unavailable"
+        }
+      },
+      "retry_strategy": {
+        "should_retry": true,
+        "backoff_seconds": 30,
+        "max_retries": 3
+      }
+    },
+    {
+      "error_type": "quota_exceeded",
+      "description": "Usage quota exceeded",
+      "http_status": 429,
+      "error_response": {
+        "error": {
+          "message": "You have exceeded your usage quota. Please check billing.",
+          "type": "quota_error",
+          "code": "quota_exceeded"
+        }
+      },
+      "retry_strategy": {
+        "should_retry": false,
+        "requires_fix": "Account billing/quota"
+      }
+    }
+  ],
+  "file_errors": [
+    {
+      "error_type": "file_not_found",
+      "description": "Required file not found",
+      "error_code": "ENOENT",
+      "error_message": "No such file or directory: '/path/to/missing/file.mp4'",
+      "recovery_actions": [
+        "Check file path",
+        "Verify file exists",
+        "Check permissions"
+      ]
+    },
+    {
+      "error_type": "permission_denied",
+      "description": "Insufficient file permissions",
+      "error_code": "EACCES",
+      "error_message": "Permission denied: cannot read '/restricted/path/file.mp4'",
+      "recovery_actions": [
+        "Check file permissions",
+        "Run with appropriate user",
+        "Change file ownership"
+      ]
+    },
+    {
+      "error_type": "disk_full",
+      "description": "Insufficient disk space",
+      "error_code": "ENOSPC",
+      "error_message": "No space left on device",
+      "recovery_actions": [
+        "Free up disk space",
+        "Check available storage",
+        "Clean temporary files"
+      ]
+    },
+    {
+      "error_type": "invalid_format",
+      "description": "Unsupported or corrupted file format",
+      "error_code": "FORMAT_ERROR",
+      "error_message": "Unable to decode video file: invalid or corrupted format",
+      "recovery_actions": [
+        "Verify file integrity",
+        "Check file format compatibility", 
+        "Try alternative file"
+      ]
+    }
+  ],
+  "network_errors": [
+    {
+      "error_type": "connection_timeout",
+      "description": "Network connection timeout",
+      "error_code": "TIMEOUT",
+      "error_message": "Connection timed out after 30 seconds",
+      "recovery_actions": [
+        "Check internet connection",
+        "Increase timeout duration",
+        "Try alternative endpoint"
+      ]
+    },
+    {
+      "error_type": "dns_resolution_failed",
+      "description": "Domain name resolution failed",
+      "error_code": "DNS_ERROR", 
+      "error_message": "Failed to resolve hostname: api.nonexistent.com",
+      "recovery_actions": [
+        "Check domain name spelling",
+        "Verify DNS settings",
+        "Try alternative DNS server"
+      ]
+    },
+    {
+      "error_type": "connection_refused",
+      "description": "Connection refused by server",
+      "error_code": "CONNECTION_REFUSED",
+      "error_message": "Connection refused by server on port 8080",
+      "recovery_actions": [
+        "Check if service is running",
+        "Verify port number",
+        "Check firewall settings"
+      ]
+    }
+  ],
+  "validation_errors": [
+    {
+      "error_type": "empty_required_field",
+      "field": "api_key",
+      "description": "Required field is empty",
+      "error_message": "API key cannot be empty or null",
+      "validation_rule": "not_empty"
+    },
+    {
+      "error_type": "invalid_format",
+      "field": "target_language", 
+      "description": "Invalid language code format",
+      "error_message": "Language code 'xyz123' is not supported",
+      "validation_rule": "valid_language_code"
+    },
+    {
+      "error_type": "out_of_range",
+      "field": "max_workers",
+      "description": "Value outside allowed range", 
+      "error_message": "max_workers must be between 1 and 16, got -5",
+      "validation_rule": "range(1, 16)"
+    },
+    {
+      "error_type": "invalid_url",
+      "field": "api_base_url",
+      "description": "Invalid URL format",
+      "error_message": "Invalid URL format: 'not-a-valid-url'",
+      "validation_rule": "valid_url"
+    }
+  ],
+  "processing_errors": [
+    {
+      "error_type": "transcription_failed", 
+      "description": "Audio transcription failed",
+      "error_message": "Failed to transcribe audio: model initialization error",
+      "context": {
+        "audio_file": "/path/to/audio.wav",
+        "model": "whisper-large-v3",
+        "duration": 120.5
+      }
+    },
+    {
+      "error_type": "translation_failed",
+      "description": "Text translation failed",
+      "error_message": "Translation service returned error: unsupported language pair",
+      "context": {
+        "source_language": "en",
+        "target_language": "xyz",
+        "text_length": 150
+      }
+    },
+    {
+      "error_type": "tts_generation_failed",
+      "description": "Text-to-speech generation failed",
+      "error_message": "TTS synthesis failed: voice model not available",
+      "context": {
+        "text": "Sample text for synthesis",
+        "voice": "en-US-AriaNeural", 
+        "tts_provider": "azure"
+      }
+    },
+    {
+      "error_type": "video_encoding_failed",
+      "description": "Video encoding/processing failed",
+      "error_message": "FFmpeg encoding failed with exit code 1",
+      "context": {
+        "input_file": "/path/to/input.mp4",
+        "output_file": "/path/to/output.mp4",
+        "encoder": "h264",
+        "resolution": "1920x1080"
+      }
+    }
+  ]
+}
+EOF < /dev/null

@@ -1,0 +1,158 @@
+# Quality Guardian Standards Configuration
+# 质量管理标准配置文件
+
+# 覆盖率要求
+coverage_requirements:
+  unit_tests:
+    minimum: 70      # 最低要求70%
+    target: 80       # 目标80%
+    excellent: 90    # 优秀90%+
+  integration_tests:
+    minimum: 60
+    target: 70
+    excellent: 80
+  e2e_tests:
+    minimum: 50
+    target: 60
+    excellent: 70
+
+# 复杂度限制
+complexity_limits:
+  cyclomatic_complexity:
+    max: 10          # 最大圈复杂度
+    warning: 8       # 警告阈值
+  function_length:
+    max: 50          # 最大函数行数
+    warning: 30      # 警告阈值
+  class_length:
+    max: 500         # 最大类行数
+    warning: 300     # 警告阈值
+
+# 质量阈值
+quality_thresholds:
+  overall_quality_score:
+    minimum: 60      # 整体质量分数最低要求
+    target: 75       # 目标质量分数
+    excellent: 85    # 优秀质量分数
+  test_pass_rate:
+    minimum: 95      # 测试通过率最低要求
+    target: 98       # 目标通过率
+    excellent: 99    # 优秀通过率
+  build_success_rate:
+    minimum: 90      # 构建成功率最低要求
+    target: 95       # 目标成功率
+    excellent: 98    # 优秀成功率
+
+# 风险评估配置
+risk_assessment:
+  high_risk_changes:
+    coverage_drop: 10        # 覆盖率下降10%以上为高风险
+    core_modules:            # 核心模块路径
+      - "core/"
+      - "src/main/"
+      - "quality_guardian/core/"
+    test_failure_rate: 5     # 测试失败率5%以上为高风险
+  medium_risk_changes:
+    coverage_drop: 5         # 覆盖率下降5%以上为中等风险
+    test_failure_rate: 2     # 测试失败率2%以上为中等风险
+
+# 文档质量要求
+documentation_requirements:
+  api_documentation:
+    completeness: 80         # API文档完整性要求80%
+  readme_maintenance:
+    update_frequency: 30     # README更新频率（天）
+  inline_comments:
+    complex_functions: true  # 复杂函数必须有注释
+    public_apis: true        # 公共API必须有文档字符串
+
+# 测试质量标准
+test_quality_standards:
+  naming_conventions:
+    pattern: "test_.*"       # 测试函数命名模式
+    descriptive_names: true  # 要求描述性名称
+  test_structure:
+    max_function_length: 30  # 测试函数最大长度
+    max_file_length: 500     # 测试文件最大长度
+    max_class_methods: 20    # 测试类最大方法数
+  mock_usage:
+    external_only: true      # 只Mock外部依赖
+    realistic_responses: true # 要求真实的Mock响应
+
+# 性能要求
+performance_requirements:
+  test_execution:
+    unit_test_max_time: 1.0  # 单元测试最大执行时间（秒）
+    integration_test_max_time: 30.0  # 集成测试最大执行时间
+    total_suite_max_time: 300.0      # 完整测试套件最大执行时间
+  build_performance:
+    max_build_time: 600      # 最大构建时间（秒）
+  resource_usage:
+    max_memory_growth: 100   # 最大内存增长（MB）
+
+# 合规性要求
+compliance_requirements:
+  audit_logging:
+    retention_period: 365    # 审计日志保留期（天）
+    immutable_records: true  # 审计记录不可变
+  change_tracking:
+    all_changes_logged: true # 所有变更都需记录
+    author_required: true    # 需要作者信息
+  reporting:
+    monthly_reports: true    # 月度报告要求
+    quarterly_audits: true   # 季度审计要求
+
+# 告警配置
+alerting_config:
+  critical_alerts:
+    coverage_drop_threshold: 15  # 覆盖率下降15%触发严重告警
+    test_failure_spike: 10       # 测试失败数量激增10个触发告警
+    build_failure_streak: 3      # 连续构建失败3次触发告警
+  warning_alerts:
+    quality_score_drop: 10       # 质量分数下降10分触发警告
+    documentation_gaps: 5        # 文档缺失5个以上触发警告
+  notification_channels:
+    email: true
+    slack: false
+    webhook: false
+
+# Agent协作配置
+agent_collaboration:
+  code_review_agent:
+    quality_check_on_review: true     # 代码审查时进行质量检查
+    block_on_critical_issues: true   # 严重问题时阻止合并
+  test_agent:
+    coverage_integration: true       # 集成覆盖率数据
+    performance_monitoring: true     # 性能监控
+  documentation_agent:
+    sync_on_api_changes: true       # API变更时同步文档
+    completeness_tracking: true     # 跟踪文档完整性
+
+# 质量改进配置
+quality_improvement:
+  auto_standards_adjustment:
+    enabled: true              # 启用自动标准调整
+    improvement_threshold: 1.1 # 表现超过行业标准10%时提高标准
+    degradation_threshold: 0.9 # 表现低于行业标准10%时制定改进计划
+  continuous_monitoring:
+    daily_checks: true         # 每日质量检查
+    trend_analysis: true       # 趋势分析
+    predictive_alerts: true    # 预测性告警
+
+# 项目特定配置 (VideoLingo)
+project_specific:
+  videolingo:
+    core_modules:
+      - "core/_1_ytdlp.py"
+      - "core/_2_asr.py"
+      - "core/_4_2_translate.py"
+      - "core/utils/config_utils.py"
+      - "core/utils/ask_gpt.py"
+    critical_tests:
+      - "tests/unit/test_config_utils.py"
+      - "tests/unit/test_ask_gpt.py"
+      - "tests/integration/test_pipeline_flow.py"
+    special_requirements:
+      gpu_dependent_tests: true    # 包含GPU依赖测试
+      large_model_handling: true   # 大模型处理特殊要求
+      external_api_mocking: true   # 外部API Mock要求

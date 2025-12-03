@@ -84,11 +84,135 @@ The application follows a numbered pipeline approach:
 - Avoid complex function annotations
 - Minimize internal function comments
 
+## 🎨 UX Agent Integration
+
+The UX Agent is now integrated into the Claude Code system to provide professional user experience guidance:
+
+### UX Agent Capabilities
+- **Nielsen Heuristic Analysis**: Systematic usability evaluation based on Jakob Nielsen's 10 principles
+- **User Research Insights**: Data-driven user behavior analysis and journey mapping
+- **Interaction Design Optimization**: Information architecture and user flow improvements
+- **Visual Design System**: Design system construction and visual hierarchy optimization
+- **Usability Testing**: A/B testing strategies and user validation methodologies
+
+### Auto-Trigger Scenarios
+The UX Agent automatically activates when:
+- Modifying UI components (*.tsx, *.jsx, *.vue, *.html, *.css files)
+- Working in `/components/` or `/pages/` directories
+- UI-related Python files (`*ui*.py`, `/st_utils/` directory)
+- User mentions UX-related keywords: "user experience", "interface", "usability", "navigation"
+- Performance issues affect user experience (>3s load time, >100ms interaction delay)
+
+### Manual Invocation
+```bash
+# Direct UX analysis commands
+@ux-agent analyze --component="VideoUploadForm" --principle="nielsen"
+@ux-agent research --user-flow="video-processing" --method="journey-map"
+@ux-agent design --pattern="progress-indicator" --platform="web"
+```
+
+### Collaboration with Other Agents
+- **With Code-Reviewer**: Provides UX improvements for UI code reviews
+- **With Debug-Specialist**: Analyzes UX root causes of interaction bugs
+- **With Performance-Profiler**: Suggests perceived performance optimizations
+- **With Code-Quality-Guardian**: Ensures accessibility (a11y) compliance
+
+### UX Analysis for VideoLingo
+Special focus areas for this video processing application:
+- **Processing Workflow UX**: Optimize the 15-stage video processing pipeline for user clarity
+- **Progress Indication**: Design clear status communication during long-running AI tasks
+- **Error Recovery**: User-friendly error handling for transcription/translation failures
+- **Batch Processing**: Efficient UI patterns for handling multiple videos
+- **Mobile Responsiveness**: Ensure core functions work on mobile devices
+- **Accessibility**: WCAG compliance for inclusive video processing tools
+
+The UX Agent uses VideoLingo's user research insights:
+- 45% Content Creators (need speed + quality)
+- 30% Enterprise Users (need batch processing + consistency)  
+- 20% Educators (need accuracy + editability)
+- 5% Developers (need API integration + customization)
+
 ### Output Structure
 - `output/` - Main output directory
 - `output/log/` - Processing logs and terminology files
 - `output/*.mp4` - Final video outputs
 - `_model_cache/` - Cached models directory
+
+## 🛡️ GitIgnore Management System
+
+### Integrated GitIgnore Guardian Agent
+
+VideoLingo integrates with Claude Code's `gitignore-guardian` agent for intelligent repository hygiene:
+
+**Auto-triggered Actions:**
+- **Pre-commit scanning**: Automatically detect sensitive files before commits
+- **Technology detection**: Add ignore patterns when new frameworks detected  
+- **Security auditing**: Scan for API keys, credentials, and config files
+- **Performance optimization**: Ignore large artifacts and build outputs
+
+**Manual Commands:**
+- `@gitignore-guardian analyze` - Comprehensive .gitignore analysis
+- `@gitignore-guardian security` - Security-focused file scanning
+- `@gitignore-guardian optimize` - Pattern consolidation and optimization
+- `@gitignore-guardian sync` - Technology stack synchronization
+
+**VideoLingo-Specific Patterns:**
+- Processing outputs: `output/`, `_model_cache/`, batch processing artifacts
+- Media files: `*.mp4`, `*.wav`, `*.srt`, temporary audio/video files
+- Configuration: `keys.ini`, `config.yaml` (if containing secrets)
+- Development: `temp_*/`, debug logs, test artifacts
+
+### Hooks Configuration
+
+**Pre-commit Hooks:**
+```yaml
+pre_commit:
+  - agent: gitignore-guardian
+    action: security_audit
+    priority: high
+    conditions:
+      - untracked_sensitive_files
+      - config_files_modified
+      
+  - agent: gitignore-guardian  
+    action: pattern_optimization
+    priority: medium
+    conditions:
+      - new_build_artifacts
+      - large_untracked_files
+```
+
+**Post-file-operation Hooks:**
+```yaml  
+post_file_operation:
+  - agent: gitignore-guardian
+    action: analyze_new_patterns
+    trigger: 
+      - new_technology_detected
+      - dependency_changes
+      - output_directory_created
+```
+
+**Continuous Monitoring:**
+- Monitor working directory for sensitive file patterns
+- Auto-add ignore patterns for detected frameworks (Node.js, Docker, etc.)
+- Performance alerts for repositories exceeding size thresholds
+- Security warnings for untracked credential files
+
+### Integration with VideoLingo Workflow
+
+1. **Project Setup**: Auto-configure comprehensive .gitignore for video processing
+2. **Development**: Continuous monitoring for temporary files and artifacts  
+3. **Processing**: Ignore intermediate outputs while preserving final results
+4. **Security**: Prevent accidental commit of API keys and sensitive configurations
+5. **Performance**: Maintain optimal repository size by ignoring large media files
+
+### Best Practices Enforcement
+
+- **Security-first**: Always ignore sensitive files before they're tracked
+- **Technology-aware**: Automatically adapt patterns to project dependencies
+- **Performance-optimized**: Prioritize directory patterns for Git efficiency
+- **Documentation**: Self-documenting .gitignore with categorized sections
 
 # VideoLingo - OpenRouter支持和Docker自动部署配置
 

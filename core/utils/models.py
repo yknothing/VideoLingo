@@ -4,17 +4,21 @@
 import os
 from .config_utils import get_storage_paths
 
+
 def _get_paths():
     """Get configured storage paths"""
     return get_storage_paths()
 
+
 def _get_temp_path():
     """Get temp directory path"""
-    return _get_paths()['temp']
+    return _get_paths()["temp"]
+
 
 def _get_output_path():
     """Get output directory path"""
-    return _get_paths()['output']
+    return _get_paths()["output"]
+
 
 # ------------------------------------------
 # 定义中间产出文件 (使用temp目录)
@@ -49,6 +53,38 @@ _AUDIO_TMP_DIR = os.path.join(_get_temp_path(), "audio", "tmp")
 _OUTPUT_DIR = _get_output_path()
 
 # ------------------------------------------
+# 数据模型类 (为测试兼容性添加)
+# ------------------------------------------
+
+
+class TranscriptionData:
+    """Simple data holder for transcription results"""
+
+    def __init__(self, text="", timestamps=None, language=""):
+        self.text = text
+        self.timestamps = timestamps or []
+        self.language = language
+
+
+class TranslationData:
+    """Simple data holder for translation results"""
+
+    def __init__(self, source="", target="", language=""):
+        self.source = source
+        self.target = target
+        self.language = language
+
+
+class AudioData:
+    """Simple data holder for audio information"""
+
+    def __init__(self, path="", duration=0.0, sample_rate=22050):
+        self.path = path
+        self.duration = duration
+        self.sample_rate = sample_rate
+
+
+# ------------------------------------------
 # 导出
 # ------------------------------------------
 
@@ -68,5 +104,8 @@ __all__ = [
     "_BACKGROUND_AUDIO_FILE",
     "_AUDIO_REFERS_DIR",
     "_AUDIO_SEGS_DIR",
-    "_AUDIO_TMP_DIR"
+    "_AUDIO_TMP_DIR",
+    "TranscriptionData",
+    "TranslationData",
+    "AudioData",
 ]

@@ -1,0 +1,116 @@
+{
+  "language": "zh",
+  "language_name": "简体中文",
+  "sample_sentences": [
+    {
+      "id": "zh_001",
+      "text": "你好，欢迎观看我们的教育视频。",
+      "complexity": "simple",
+      "character_count": 14,
+      "duration_estimate": 3.2,
+      "tags": ["问候", "介绍"]
+    },
+    {
+      "id": "zh_002",
+      "text": "机器学习算法能够处理大量数据，识别模式并做出预测。",
+      "complexity": "complex", 
+      "character_count": 24,
+      "duration_estimate": 5.8,
+      "tags": ["技术", "人工智能", "解释"]
+    },
+    {
+      "id": "zh_003",
+      "text": "人工智能技术正在改变医疗、金融、交通等行业。",
+      "complexity": "medium",
+      "character_count": 21,
+      "duration_estimate": 4.9,
+      "tags": ["技术", "行业", "变革"]
+    },
+    {
+      "id": "zh_004", 
+      "text": "深度学习通过多层神经网络模拟人脑处理信息的方式，能够识别复杂的数据模式。",
+      "complexity": "complex",
+      "character_count": 35,
+      "duration_estimate": 8.2,
+      "tags": ["深度学习", "神经网络", "技术解释"]
+    },
+    {
+      "id": "zh_005",
+      "text": "谢谢观看本次教程。",
+      "complexity": "simple",
+      "character_count": 9,
+      "duration_estimate": 2.1,
+      "tags": ["结尾", "感谢"]
+    }
+  ],
+  "translation_pairs": [
+    {
+      "source": "你好，世界！",
+      "targets": {
+        "en": "Hello, world\!",
+        "es": "¡Hola, mundo\!",
+        "fr": "Bonjour, le monde\!",
+        "de": "Hallo, Welt\!"
+      }
+    },
+    {
+      "source": "今天天气怎么样？", 
+      "targets": {
+        "en": "How is the weather today?",
+        "es": "¿Cómo está el tiempo hoy?",
+        "fr": "Quel temps fait-il aujourd'hui?",
+        "de": "Wie ist das Wetter heute?"
+      }
+    },
+    {
+      "source": "人工智能正在改变我们的生活方式。",
+      "targets": {
+        "en": "Artificial intelligence is changing our way of life.",
+        "es": "La inteligencia artificial está cambiando nuestra forma de vida.",
+        "fr": "L'intelligence artificielle change notre mode de vie.",
+        "de": "Künstliche Intelligenz verändert unsere Lebensweise."
+      }
+    }
+  ],
+  "terminology": {
+    "ai_ml": {
+      "人工智能": "artificial intelligence",
+      "机器学习": "machine learning",
+      "神经网络": "neural network",
+      "深度学习": "deep learning",
+      "算法": "algorithm",
+      "数据处理": "data processing",
+      "模式识别": "pattern recognition",
+      "预测分析": "predictive analytics"
+    },
+    "video_processing": {
+      "转录": "transcription",
+      "翻译": "translation",
+      "字幕": "subtitles",
+      "配音": "dubbing", 
+      "语音合成": "voice synthesis",
+      "音频处理": "audio processing",
+      "视频编码": "video encoding",
+      "格式转换": "format conversion"
+    }
+  },
+  "special_characters": {
+    "punctuation": ["。", "，", "？", "！", "；", "：", "、"],
+    "quotes": [""", """, "'", "'"],
+    "brackets": ["（", "）", "【", "】", "《", "》"],
+    "numbers": ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
+  },
+  "text_processing_rules": {
+    "sentence_splitting": {
+      "primary_delimiters": ["。", "！", "？"],
+      "secondary_delimiters": ["，", "；"],
+      "quotation_handling": "preserve_quotes"
+    },
+    "character_weighting": {
+      "standard": 1.0,
+      "cjk_multiplier": 1.75,
+      "punctuation_weight": 0.5
+    }
+  }
+}
+EOF < /dev/null
