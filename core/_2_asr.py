@@ -1,5 +1,6 @@
 from core.utils import *
 import contextlib
+import json
 import threading
 import time
 from typing import Dict, List, Optional, Tuple, Any
@@ -24,6 +25,7 @@ from core.asr_backend.audio_preprocess import (
 )
 from core._1_ytdlp import find_video_files
 from core.utils.models import *
+from core.constants import MemoryConstants
 import psutil
 import gc
 import weakref
@@ -249,8 +251,10 @@ class MemoryEfficientResultCollector:
                                 
             # Add overhead for metadata
             return max(text_size * 2, 1024)  # At least 1KB per result
-        except Exception:
-            return 10240  # 10KB default estimate
+        except Exception as e:
+            # Log the error for debugging instead of silent failure
+            rprint(f"[yellow]⚠️ Size estimation failed: {type(e).__name__}: {str(e)[:50]}[/yellow]")
+            return MemoryConstants.DEFAULT_SIZE_ESTIMATE_BYTES
             
     def add_result(self, result: Dict):
         """Add result with memory monitoring"""
@@ -258,7 +262,8 @@ class MemoryEfficientResultCollector:
         self._total_size_estimate += result_size
         
         # Check if we should spill to disk
-        if self._total_size_estimate > (self.max_memory_mb * 1024 * 1024):
+        max_memory_bytes = self.max_memory_mb * MemoryConstants.BYTES_PER_MB
+        if self._total_size_estimate > max_memory_bytes:
             if not self.spill_to_disk:
                 rprint("[yellow]💾 Memory limit reached, spilling results to disk[/yellow]")
                 self._enable_disk_spill()
@@ -292,7 +297,6 @@ class MemoryEfficientResultCollector:
             for i, result in enumerate(to_spill):
                 disk_file = os.path.join(self.temp_dir, f"result_{len(self.disk_results) + i}.json")
                 with open(disk_file, 'w', encoding='utf-8') as f:
-                    import json
                     json.dump(result, f, ensure_ascii=False)
                 self.disk_results.append(disk_file)
                 
@@ -306,7 +310,7 @@ class MemoryEfficientResultCollector:
             gc.collect()
             
         except Exception as e:
-            rprint(f"[yellow]⚠️ Disk spill failed: {e}[/yellow]")
+            rprint(f"[yellow]⚠️ Disk spill failed: {type(e).__name__}: {str(e)}[/yellow]")
             
     def _spill_to_disk_if_needed(self):
         """Check if we should spill more results to disk"""

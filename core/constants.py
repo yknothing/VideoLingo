@@ -105,6 +105,25 @@ class SecurityConstants:
     
     # Temporary file cleanup
     TEMP_FILE_CLEANUP_HOURS = 24  # Clean up temp files after 24 hours
+    
+    # ------------
+    # JSON parsing security limits
+    # ------------
+    # Max response size for JSON parsing (5MB allows large transcriptions)
+    MAX_JSON_RESPONSE_SIZE = 5 * 1024 * 1024  # 5MB
+    # Max nesting depth for JSON objects
+    MAX_JSON_NESTING_DEPTH = 50
+    # Max string length in JSON values
+    MAX_JSON_STRING_LENGTH = 1 * 1024 * 1024  # 1MB per string
+
+
+class MemoryConstants:
+    """Memory management related constants"""
+    
+    # Size estimation defaults
+    DEFAULT_SIZE_ESTIMATE_BYTES = 10 * 1024  # 10KB default estimate
+    BYTES_PER_MB = 1024 * 1024
+    BYTES_PER_GB = 1024 * 1024 * 1024
 
 
 class LanguageConstants:

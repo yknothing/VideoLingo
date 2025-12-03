@@ -25,42 +25,179 @@ from pathlib import Path
 # ------------
 def _validate_path(path_str):
     """
-    Validate and sanitize path input to prevent injection attacks.
+    Enhanced path validation with comprehensive traversal attack prevention.
+    
+    Security measures:
+    - URL decoding to prevent encoded bypass (%2e%2e%2f)
+    - Windows and Unix traversal pattern detection
+    - Symlink resolution and validation
+    - Shell metacharacter blocking
+    - Allowed directory whitelist validation
+    
     Returns (is_valid: bool, sanitized_path: str, error_msg: str)
     """
+    import urllib.parse
+    
     if not path_str or not isinstance(path_str, str):
         return False, "", "Invalid path format"
     
     try:
-        # Remove any null bytes and control characters
-        sanitized = re.sub(r'[\x00-\x1f\x7f]', '', path_str.strip())
+        # ------------
+        # Step 1: Decode URL-encoded content to prevent bypass attacks
+        # ------------
+        try:
+            decoded_path = urllib.parse.unquote(path_str)
+            # Double decode to catch double-encoded attacks
+            decoded_path = urllib.parse.unquote(decoded_path)
+        except Exception:
+            decoded_path = path_str
         
-        # Check for malicious patterns
+        # ------------
+        # Step 2: Remove null bytes and control characters
+        # ------------
+        sanitized = re.sub(r'[\x00-\x1f\x7f]', '', decoded_path.strip())
+        
+        # ------------
+        # Step 3: Check for malicious patterns (both Unix and Windows)
+        # ------------
         dangerous_patterns = [
-            r'[;&|`$()]',  # Shell metacharacters
-            r'\.\./|\.\.',  # Path traversal attempts
-            r'^\s*[|;&]',   # Command chaining at start
-            r'[|;&]\s*$',   # Command chaining at end
+            r'[;&|`$()]',           # Shell metacharacters
+            r'\.\./|\.\.',          # Unix path traversal (..)
+            r'\.\.\\',              # Windows path traversal (..\)
+            r'%2e%2e',              # URL encoded traversal
+            r'%252e%252e',          # Double URL encoded
+            r'^\s*[|;&]',           # Command chaining at start
+            r'[|;&]\s*$',           # Command chaining at end
+            r'\\\\',                # UNC paths (\\server\share)
+            r'^\s*~',               # Home directory expansion
         ]
         
         for pattern in dangerous_patterns:
-            if re.search(pattern, sanitized):
-                return False, "", f"Potentially malicious path pattern detected"
+            if re.search(pattern, sanitized, re.IGNORECASE):
+                return False, "", "Potentially malicious path pattern detected"
         
-        # Convert to Path object for additional validation
-        path_obj = Path(sanitized).resolve()
+        # Also check the original input for encoded attacks
+        for pattern in [r'%2e%2e', r'%252e', r'%00']:
+            if re.search(pattern, path_str, re.IGNORECASE):
+                return False, "", "URL-encoded attack pattern detected"
         
-        # Ensure path exists and is accessible
-        if not path_obj.exists():
-            return False, str(path_obj), "Path does not exist"
+        # ------------
+        # Step 4: Convert to Path and resolve symlinks
+        # ------------
+        path_obj = Path(sanitized)
+        
+        # Check if path contains symlinks before resolving
+        try:
+            # Resolve to get the real path (follows symlinks)
+            resolved_path = path_obj.resolve()
+        except (OSError, RuntimeError) as e:
+            return False, "", f"Path resolution error: {str(e)}"
+        
+        # ------------
+        # Step 5: Validate against allowed directories
+        # ------------
+        allowed_roots = _get_allowed_path_roots()
+        
+        path_in_allowed = False
+        for allowed_root in allowed_roots:
+            try:
+                resolved_path.relative_to(allowed_root)
+                path_in_allowed = True
+                break
+            except ValueError:
+                continue
+        
+        if not path_in_allowed:
+            return False, "", "Path is outside allowed directories"
+        
+        # ------------
+        # Step 6: Existence and type checks
+        # ------------
+        if not resolved_path.exists():
+            return False, str(resolved_path), "Path does not exist"
             
-        if not path_obj.is_dir():
-            return False, str(path_obj), "Path is not a directory"
+        if not resolved_path.is_dir():
+            return False, str(resolved_path), "Path is not a directory"
+        
+        # ------------
+        # Step 7: Symlink safety check - ensure final path is still in allowed area
+        # ------------
+        if path_obj.is_symlink():
+            # Verify the symlink target is also in allowed directories
+            symlink_target = resolved_path
+            target_in_allowed = False
+            for allowed_root in allowed_roots:
+                try:
+                    symlink_target.relative_to(allowed_root)
+                    target_in_allowed = True
+                    break
+                except ValueError:
+                    continue
             
-        return True, str(path_obj), ""
+            if not target_in_allowed:
+                return False, "", "Symlink target is outside allowed directories"
+            
+        return True, str(resolved_path), ""
         
     except Exception as e:
         return False, "", f"Path validation error: {str(e)}"
+
+
+def _get_allowed_path_roots():
+    """
+    Get list of allowed root directories for path validation.
+    Returns list of Path objects representing allowed directories.
+    """
+    import platform
+    
+    allowed = []
+    
+    # Always allow user home directory
+    try:
+        allowed.append(Path.home().resolve())
+    except Exception:
+        pass
+    
+    # Platform-specific allowed directories
+    if platform.system() in ("Linux", "Darwin", "FreeBSD", "OpenBSD"):
+        # Unix-like systems
+        allowed.extend([
+            Path("/tmp").resolve() if Path("/tmp").exists() else None,
+            Path("/Users").resolve() if Path("/Users").exists() else None,
+            Path("/home").resolve() if Path("/home").exists() else None,
+        ])
+        # macOS external drives
+        if platform.system() == "Darwin":
+            volumes = Path("/Volumes")
+            if volumes.exists():
+                allowed.append(volumes.resolve())
+        # Linux mount points
+        for mount_point in ["/media", "/mnt"]:
+            mp = Path(mount_point)
+            if mp.exists():
+                allowed.append(mp.resolve())
+                
+    elif platform.system() == "Windows":
+        # Windows user directories
+        import os
+        system_drive = os.environ.get("SYSTEMDRIVE", "C:")
+        users_path = Path(f"{system_drive}\\Users")
+        if users_path.exists():
+            allowed.append(users_path.resolve())
+        # Windows temp
+        temp_path = Path(f"{system_drive}\\Temp")
+        if temp_path.exists():
+            allowed.append(temp_path.resolve())
+    
+    # Also allow project root and output directory
+    try:
+        project_root = Path(".").resolve()
+        allowed.append(project_root)
+    except Exception:
+        pass
+    
+    # Filter out None values
+    return [p for p in allowed if p is not None]
 
 
 def _safe_shell_escape(path_str):
