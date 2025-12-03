@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repository Information
+
+**Default Repository**: This project's default repository is `yknothing/VideoLingo`
+
+**Pull Request Guidelines**:
+- All Pull Requests should target the `yknothing/VideoLingo` repository
+- Default base branch: `main`
+- Ensure your changes are committed to feature branches before creating PRs
+- The upstream repository (`Huanshere/VideoLingo`) is for reference only
+
+**Git Configuration**:
+- Origin remote: `yknothing/VideoLingo`
+- When forking, ensure you set `yknothing/VideoLingo` as your upstream target
+- Clone command: `git clone https://github.com/yknothing/VideoLingo.git`
+
 ## Commands
 
 ### Installation and Setup
