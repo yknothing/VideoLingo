@@ -124,6 +124,14 @@ class MemoryConstants:
     DEFAULT_SIZE_ESTIMATE_BYTES = 10 * 1024  # 10KB default estimate
     BYTES_PER_MB = 1024 * 1024
     BYTES_PER_GB = 1024 * 1024 * 1024
+    
+    # Memory pressure thresholds
+    CRITICAL_THRESHOLD = 0.90   # 90% - Critical level
+    WARNING_THRESHOLD = 0.80    # 80% - Warning level
+    SAFE_THRESHOLD = 0.70       # 70% - Safe level
+    MIN_FREE_RATIO = 0.10       # Minimum 10% free memory
+    MAX_RESULTS_RATIO = 0.20    # Max 20% for results storage
+    MIN_FREE_BYTES = 1 * BYTES_PER_GB  # Minimum 1GB free
 
 
 class LanguageConstants:

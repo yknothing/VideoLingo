@@ -1,5 +1,6 @@
 import threading
 import os
+import time
 from typing import Optional, Dict, Any
 
 # Lazy imports - only load heavy modules when needed
@@ -9,8 +10,6 @@ _dotenv_loaded = False
 # Simple cache for config values to reduce file I/O
 _config_cache = {}
 _cache_valid = False
-import time
-
 _cache_timestamp = 0
 CACHE_TTL = 1.0  # Cache config for 1 second
 

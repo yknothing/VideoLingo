@@ -39,11 +39,11 @@ class MemoryManager:
     
     def __init__(self):
         self.system_memory = psutil.virtual_memory().total
-        self.critical_threshold = 0.90  # 90% - Critical level
-        self.warning_threshold = 0.80   # 80% - Warning level
-        self.safe_threshold = 0.70      # 70% - Safe level
-        self.min_free_memory = max(1024 * 1024 * 1024, self.system_memory * 0.10)  # 1GB or 10% of total
-        self.max_results_memory = self.system_memory * 0.20  # Max 20% of system memory for results
+        self.critical_threshold = MemoryConstants.CRITICAL_THRESHOLD
+        self.warning_threshold = MemoryConstants.WARNING_THRESHOLD
+        self.safe_threshold = MemoryConstants.SAFE_THRESHOLD
+        self.min_free_memory = max(MemoryConstants.MIN_FREE_BYTES, self.system_memory * MemoryConstants.MIN_FREE_RATIO)
+        self.max_results_memory = self.system_memory * MemoryConstants.MAX_RESULTS_RATIO
         self.memory_history = deque(maxlen=10)
         self.pressure_detected = False
         self.cleanup_callbacks = []
@@ -343,10 +343,15 @@ class MemoryEfficientResultCollector:
                 rprint("[cyan]🧹 Temporary disk storage cleaned up[/cyan]")
             except Exception as e:
                 rprint(f"[yellow]⚠️ Cleanup warning: {e}[/yellow]")
-                
-    def __del__(self):
-        """Destructor to ensure cleanup"""
+    
+    def __enter__(self):
+        """Context manager entry"""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - ensures cleanup"""
         self.cleanup()
+        return False
 
 
 @contextlib.contextmanager
