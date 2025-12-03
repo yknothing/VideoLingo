@@ -45,10 +45,7 @@ def _ensure_dotenv():
 
 
 def _invalidate_cache():
-    """
-    Invalidate the config cache (call when config is updated).
-    Thread-safe implementation using lock.
-    """
+    """Invalidate the config cache (call when config is updated)"""
     global _config_cache, _cache_valid, _cache_timestamp
     with lock:
         _config_cache = {}
@@ -57,42 +54,27 @@ def _invalidate_cache():
 
 
 def _get_cached_config():
-    """
-    Get cached config data or load from file if cache is stale.
-    
-    Thread-safe implementation: all cache operations are protected by lock
-    to prevent race conditions in multi-threaded environments.
-    """
+    """Get cached config data or load from file if cache is stale"""
     global _config_cache, _cache_valid, _cache_timestamp
 
-    # ------------
-    # CRITICAL FIX: Move entire cache check inside lock to prevent race conditions
-    # ------------
     with lock:
         current_time = time.time()
 
-        # Check if cache is still valid (inside lock for thread safety)
         if _cache_valid and (current_time - _cache_timestamp) < CACHE_TTL:
-            # Return a copy to prevent external modifications to the cache
             return _config_cache.copy() if isinstance(_config_cache, dict) else _config_cache
 
-        # Cache is stale, reload from file
         try:
             with open(CONFIG_PATH, "r", encoding="utf-8") as file:
                 _config_cache = _get_yaml().load(file) or {}
                 _cache_valid = True
                 _cache_timestamp = current_time
-                # Return a copy to prevent external modifications
                 return _config_cache.copy() if isinstance(_config_cache, dict) else _config_cache
         except FileNotFoundError:
             _config_cache = {}
             _cache_valid = True
             _cache_timestamp = current_time
             return {}
-        except Exception as e:
-            # If there's an error, return stale cache if available
-            # Log the error for debugging
-            print(f"Warning: Config cache reload failed: {type(e).__name__}: {str(e)[:50]}")
+        except Exception:
             if _config_cache:
                 return _config_cache.copy() if isinstance(_config_cache, dict) else _config_cache
             return {}
