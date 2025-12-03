@@ -325,11 +325,10 @@ class MemoryEfficientResultCollector:
         for disk_file in self.disk_results:
             try:
                 with open(disk_file, 'r', encoding='utf-8') as f:
-                    import json
                     result = json.load(f)
                     all_results.append(result)
             except Exception as e:
-                rprint(f"[yellow]⚠️ Could not load disk result {disk_file}: {e}[/yellow]")
+                rprint(f"[yellow]⚠️ Could not load disk result {disk_file}: {type(e).__name__}: {str(e)}[/yellow]")
                 
         # Add memory results
         all_results.extend(self.results)
