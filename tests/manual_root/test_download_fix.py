@@ -6,8 +6,12 @@ import sys
 import time
 from pathlib import Path
 
-# Add current directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add project root to path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+TEST_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+DOWNLOAD_TIMEOUT_MINUTES = 3
+
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from core._1_ytdlp import download_video_ytdlp
 
@@ -31,21 +35,18 @@ def test_progress_callback(progress_data):
 
 def test_download_with_timeout():
     """Test download with a quick timeout for demonstration"""
-    # Use a shorter video for testing
-    test_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Rick Roll (shorter video)
-    
+
     print("🧪 Testing YouTube Download Progress Fixes")
     print("=" * 50)
-    print(f"📺 URL: {test_url}")
-    print("⏱️  This test will run with a 3-minute timeout for demonstration")
+    print(f"📺 URL: {TEST_URL}")
+    print(f"⏱️  This test will run with a {DOWNLOAD_TIMEOUT_MINUTES}-minute timeout for demonstration")
     print()
     
     try:
         start_time = time.time()
         
-        # The download function now has built-in timeout and stuck detection
         result = download_video_ytdlp(
-            test_url,
+            TEST_URL,
             progress_callback=test_progress_callback
         )
         

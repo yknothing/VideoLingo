@@ -9,7 +9,13 @@ import os
 import tempfile
 import subprocess
 import time
-sys.path.append('/Users/whatsup/workspace/VideoLingo')
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+FILE_SECURITY_MODULE = PROJECT_ROOT / "core" / "utils" / "file_security.py"
+SESSION_SECURITY_MODULE = PROJECT_ROOT / "core" / "utils" / "session_security.py"
+
+sys.path.append(str(PROJECT_ROOT))
 
 def test_config_command_execution():
     """测试配置系统命令执行漏洞修复"""
@@ -115,7 +121,7 @@ def test_file_upload_security():
     
     try:
         # 检查文件安全模块是否存在
-        if os.path.exists('/Users/whatsup/workspace/VideoLingo/core/utils/file_security.py'):
+        if FILE_SECURITY_MODULE.exists():
             from core.utils.file_security import validate_file_security, FileSecurityValidator
             
             validator = FileSecurityValidator()
@@ -175,7 +181,7 @@ def test_session_security():
     
     try:
         # 检查会话安全模块是否存在
-        if os.path.exists('/Users/whatsup/workspace/VideoLingo/core/utils/session_security.py'):
+        if SESSION_SECURITY_MODULE.exists():
             from core.utils.session_security import SecureSessionManager
             
             # 创建安全会话管理器

@@ -6,7 +6,11 @@
 
 import sys
 import os
-sys.path.append('/Users/whatsup/workspace/VideoLingo')
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+sys.path.append(str(PROJECT_ROOT))
 
 def test_url_validation():
     """测试URL验证修复"""
