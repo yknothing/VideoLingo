@@ -42,11 +42,11 @@ def mock_config(temp_dir):
             "device": "cpu"
         }
     }
-    
+
     # Create directories
     for path in config["paths"].values():
         Path(path).mkdir(parents=True, exist_ok=True)
-    
+
     return config
 
 
@@ -90,7 +90,7 @@ paths:
   input: input
   output: output
 """)
-    
+
     with patch.dict(os.environ, {
         "CONFIG_PATH": str(config_path),
         "VIDEOLINGO_TEST": "true"
