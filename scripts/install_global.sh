@@ -4,7 +4,8 @@
 echo "🚀 VideoLingo 全局安装脚本"
 echo "=========================="
 
-VLINGO_PATH="/Users/whatsup/workspace/VideoLingo/vlingo"
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+VLINGO_PATH="$REPO_DIR/vlingo"
 GLOBAL_PATH="/usr/local/bin/vlingo"
 
 # 检查vlingo文件是否存在
@@ -34,9 +35,9 @@ else
     else
         echo "⚠️  全局安装失败，使用本地路径..."
         echo "📝 添加到 ~/.zshrc 或 ~/.bashrc:"
-        echo "export PATH=\"/Users/whatsup/workspace/VideoLingo:\$PATH\""
+        echo "export PATH=\"$REPO_DIR:\$PATH\""
         echo ""
-        echo "或直接使用: /Users/whatsup/workspace/VideoLingo/vlingo"
+        echo "或直接使用: $VLINGO_PATH"
     fi
 fi
 
