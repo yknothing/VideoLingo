@@ -250,7 +250,7 @@ class CoverageAnalyzer:
 
 
 def main():
-    analyzer = CoverageAnalyzer("/Users/whatsup/workspace/VideoLingo")
+    analyzer = CoverageAnalyzer(str(Path(__file__).resolve().parent.parent))
 
     print("🔍 VideoLingo Branch Coverage Analysis")
     print("=" * 60)

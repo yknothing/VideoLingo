@@ -22,8 +22,8 @@ ZERO COVERAGE MODULES (CRITICAL):
 
 COVERAGE REPORTS GENERATED:
 - Terminal: coverage_analysis_report.md
-- HTML: /Users/whatsup/workspace/VideoLingo/htmlcov/index.html
-- XML: /Users/whatsup/workspace/VideoLingo/coverage.xml
+- HTML: htmlcov/index.html
+- XML: coverage.xml
 - Text Summary: coverage_summary.txt
 
 BRANCH COVERAGE QUALITY: 94% (Excellent for tested code)
